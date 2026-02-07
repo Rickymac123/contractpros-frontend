@@ -1,4 +1,10 @@
-export type UserRole = "contractor" | "recruiter" | "admin";
+export type UserRole =
+  | "professional"
+  | "company"
+  | "agency"
+  | "admin"
+  | "contractor"
+  | "recruiter";
 
 export type AuthUser = {
   id: string;

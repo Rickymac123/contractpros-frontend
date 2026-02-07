@@ -1,23 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_BASE_URL } from "@/lib/config";
 
+type Ctx = { params: Promise<{ jobId: string }> };
+
 function parseJobIdFromPath(pathname: string): string | null {
   // Expected: /api/marketplace/jobs/:jobId/apply
   const m = pathname.match(/\/api\/marketplace\/jobs\/(\d+)\/apply\/?$/);
   return m?.[1] ?? null;
 }
 
-export async function POST(
-  req: NextRequest,
-  ctx: { params?: { jobId?: string } }
-) {
+export async function POST(req: NextRequest, { params }: Ctx) {
   try {
     const session = req.cookies.get("backend_session")?.value;
     if (!session) {
       return NextResponse.json({ detail: "NOT_AUTHENTICATED" }, { status: 401 });
     }
 
-    const fromParams = ctx?.params?.jobId ?? null;
+    const { jobId: jobIdFromParams } = await params;
+    const fromParams = jobIdFromParams ?? null;
     const fromPath = parseJobIdFromPath(req.nextUrl.pathname);
     const jobId = fromParams || fromPath;
 
@@ -32,7 +32,7 @@ export async function POST(
             fromPath,
           },
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -67,7 +67,7 @@ export async function POST(
   } catch (error: any) {
     return NextResponse.json(
       { detail: `INTERNAL_APPLY_ERROR: ${error?.message ?? String(error)}` },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

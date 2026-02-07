@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_BASE_URL } from "@/lib/config";
 
+type Ctx = { params: Promise<{ id: string }> };
+
 function getCookieHeader(req: NextRequest) {
   const session = req.cookies.get("backend_session")?.value;
   if (!session) return null;
@@ -15,23 +17,21 @@ function getIdFromPath(req: NextRequest) {
   return last && last !== "undefined" ? last : null;
 }
 
-export async function PATCH(
-  req: NextRequest,
-  context: { params?: { id?: string } },
-) {
+export async function PATCH(req: NextRequest, { params }: Ctx) {
   const cookieHeader = getCookieHeader(req);
   if (!cookieHeader) {
     return NextResponse.json({ detail: "NOT_AUTHENTICATED" }, { status: 401 });
   }
 
-  const id = context?.params?.id ?? getIdFromPath(req);
-  if (!id) {
+  const { id } = await params;
+  const resolvedId = id ?? getIdFromPath(req);
+  if (!resolvedId) {
     return NextResponse.json({ detail: "MISSING_ID_PARAM" }, { status: 400 });
   }
 
   const body = await req.text();
 
-  const upstream = await fetch(`${API_BASE_URL}/admin/jobs/${id}`, {
+  const upstream = await fetch(`${API_BASE_URL}/admin/jobs/${resolvedId}`, {
     method: "PATCH",
     headers: {
       Cookie: cookieHeader,

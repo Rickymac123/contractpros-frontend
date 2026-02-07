@@ -13,11 +13,7 @@ const talentSchema = z
     profession: z.string().min(2, "Profession is required"),
     location: z.string().optional().or(z.literal("")).nullable(),
     postcode: z.string().min(2, "Postcode is required"),
-    work_radius_miles: z
-      .number({ invalid_type_error: "Work radius must be a number" })
-      .nonnegative("Work radius must be positive")
-      .optional()
-      .nullable(),
+    work_radius_miles: z.coerce.number().nonnegative("Work radius must be positive").nullable().optional(),
 
     ir35_preference: z.enum(["inside", "outside", "either"]).optional().nullable(),
 
@@ -29,13 +25,11 @@ const talentSchema = z
     industry: z.enum(["food", "pharma", "fmcg", "manufacturing"]).optional().nullable(),
 
     rate_type: z.enum(["day", "hour"]).optional().nullable(),
-    day_rate: z
-      .number({ invalid_type_error: "Day rate must be a number" })
+    day_rate: z.coerce.number()
       .nonnegative("Day rate must be positive")
       .optional()
       .nullable(),
-    hourly_rate: z
-      .number({ invalid_type_error: "Hourly rate must be a number" })
+    hourly_rate: z.coerce.number()
       .nonnegative("Hourly rate must be positive")
       .optional()
       .nullable(),
@@ -80,7 +74,7 @@ export default function NewTalentPage() {
     handleSubmit,
     control,
     formState: { errors, isSubmitting },
-  } = useForm<TalentFormValues>({
+  } = useForm<z.input<typeof talentSchema>>({
     resolver: zodResolver(talentSchema),
     defaultValues: {
       first_name: "",
@@ -103,7 +97,7 @@ export default function NewTalentPage() {
   const profession = useWatch({ control, name: "profession" });
   const rateType = useWatch({ control, name: "rate_type" });
 
-  const onSubmit = async (values: TalentFormValues) => {
+  const onSubmit = async (values: z.input<typeof talentSchema>) => {
     const payload = {
       first_name: values.first_name.trim(),
       last_name: values.last_name.trim(),
