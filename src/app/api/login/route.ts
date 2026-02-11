@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
     }
 
     const form = new URLSearchParams();
+    form.set("grant_type", "password"); 
     form.set("username", email);
     form.set("password", password);
 
