@@ -81,7 +81,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm rounded-3xl border border-neutral-800 bg-neutral-950/70 p-6 shadow-[0_0_40px_rgba(0,0,0,0.6)]">
         <header className="mb-6 space-y-1 text-center">
-          <h1 className="text-2xl font-semibold text-white">RMC Hub</h1>
+          <h1 className="text-2xl font-semibold text-white">Contract Pro's UK</h1>
           <p className="text-sm text-neutral-400">Sign in to your dashboard</p>
         </header>
 
