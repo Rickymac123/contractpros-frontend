@@ -115,8 +115,8 @@ export default function DashboardHeader() {
         >
           <div className="relative h-15 w-50">
             <Image
-              src="/company-logo.png"
-              alt="RMC"
+              src="/company-logo-new.png"
+              alt="Contractpros"
               fill
               unoptimized
               className="object-contain"
@@ -125,8 +125,8 @@ export default function DashboardHeader() {
           </div>
 
           <div className="leading-tight">
-            <div className="text-sm font-semibold text-white">RMC</div>
-            <div className="text-xs text-neutral-400">Professional Interim Solutions</div>
+            <div className="text-sm font-semibold text-white">Contract Pro's UK</div>
+            <div className="text-xs text-neutral-400">Professional Contract Solutions</div>
           </div>
         </button>
 
