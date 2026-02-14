@@ -1,31 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_BASE_URL } from "@/lib/config";
 
-function backendCookieHeader(req: NextRequest) {
+function backendCookie(req: NextRequest) {
+  // stored as: backend_session = "enginuity_auth%3D<jwt>"
   const raw = req.cookies.get("backend_session")?.value ?? "";
-  if (!raw) return "";
-
-  // backend_session stores something like: "enginuity_auth%3D<jwt>"
-  // Decode to: "enginuity_auth=<jwt>"
-  try {
-    return decodeURIComponent(raw);
-  } catch {
-    return raw;
-  }
+  return raw ? decodeURIComponent(raw) : "";
 }
 
 export async function POST(req: NextRequest) {
-  const cookieHeader = backendCookieHeader(req);
-  if (!cookieHeader) {
-    return NextResponse.json({ detail: "NOT_AUTHENTICATED" }, { status: 401 });
-  }
+  const cookie = backendCookie(req);
+  if (!cookie) return NextResponse.json({ detail: "NOT_AUTHENTICATED" }, { status: 401 });
 
   const body = await req.text();
 
   const upstream = await fetch(`${API_BASE_URL}/companies/`, {
     method: "POST",
     headers: {
-      Cookie: cookieHeader,
+      Cookie: cookie, // MUST look like: "enginuity_auth=<token>"
       "Content-Type": "application/json",
       Accept: "application/json",
     },

@@ -1,25 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_BASE_URL } from "@/lib/config";
 
-function backendCookieHeader(req: NextRequest) {
+function backendCookie(req: NextRequest) {
   const raw = req.cookies.get("backend_session")?.value ?? "";
-  if (!raw) return "";
-
-  try {
-    return decodeURIComponent(raw);
-  } catch {
-    return raw;
-  }
+  return raw ? decodeURIComponent(raw) : "";
 }
 
 export async function GET(req: NextRequest) {
-  const cookieHeader = backendCookieHeader(req);
-  if (!cookieHeader) {
-    return NextResponse.json({ detail: "NOT_AUTHENTICATED" }, { status: 401 });
-  }
+  const cookie = backendCookie(req);
+  if (!cookie) return NextResponse.json({ detail: "NOT_AUTHENTICATED" }, { status: 401 });
 
   const upstream = await fetch(`${API_BASE_URL}/companies/me`, {
-    headers: { Cookie: cookieHeader, Accept: "application/json" },
+    headers: { Cookie: cookie, Accept: "application/json" },
     cache: "no-store",
   });
 
@@ -32,17 +24,15 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const cookieHeader = backendCookieHeader(req);
-  if (!cookieHeader) {
-    return NextResponse.json({ detail: "NOT_AUTHENTICATED" }, { status: 401 });
-  }
+  const cookie = backendCookie(req);
+  if (!cookie) return NextResponse.json({ detail: "NOT_AUTHENTICATED" }, { status: 401 });
 
   const body = await req.text();
 
   const upstream = await fetch(`${API_BASE_URL}/companies/me`, {
     method: "PATCH",
     headers: {
-      Cookie: cookieHeader,
+      Cookie: cookie,
       "Content-Type": "application/json",
       Accept: "application/json",
     },
