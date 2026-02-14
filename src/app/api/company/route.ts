@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { API_BASE_URL } from "@/lib/config";
 
 function backendCookie(req: NextRequest) {
-  // stored as: backend_session = "enginuity_auth%3D<jwt>"
   const raw = req.cookies.get("backend_session")?.value ?? "";
   return raw ? decodeURIComponent(raw) : "";
 }
@@ -16,7 +15,7 @@ export async function POST(req: NextRequest) {
   const upstream = await fetch(`${API_BASE_URL}/companies/`, {
     method: "POST",
     headers: {
-      Cookie: cookie, // MUST look like: "enginuity_auth=<token>"
+      Cookie: cookie,
       "Content-Type": "application/json",
       Accept: "application/json",
     },
