@@ -16,7 +16,7 @@ export default function HomePage() {
           {/* If you already have a logo path, change src */}
           <div className="relative h-9 w-9 overflow-hidden rounded-xl border border-purple-500/35 bg-neutral-900/60">
             <Image
-              src="/company-logo.png"
+              src="/workspaces/enginuity_backend/rmc-frontend/public/company-logo-new.png"
               alt="Contract Pros"
               fill
               className="object-contain p-1.5"
