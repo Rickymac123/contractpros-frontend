@@ -275,7 +275,7 @@ export default function CompanyProfilePage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
-                  placeholder="e.g. Real Wrap Co"
+                  placeholder="e.g. Demo Company Ltd"
                 />
               </Field>
 
@@ -293,7 +293,7 @@ export default function CompanyProfilePage() {
                   value={postcode}
                   onChange={(e) => setPostcode(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
-                  placeholder="e.g. HP20 1AA"
+                  placeholder="e.g. LN1 1AA"
                 />
               </Field>
 
@@ -302,7 +302,7 @@ export default function CompanyProfilePage() {
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
-                  placeholder="e.g. Aylesbury"
+                  placeholder="e.g. Londn"
                 />
               </Field>
             </div>
