@@ -2,7 +2,7 @@ import "./globals.css";
 import type { ReactNode } from "react";
 
 export const metadata = {
-  title: "RMC – Contract & Interim Talent",
+  title: "Contract Pro's UK – Temp Recruitment Made Easy",
   description: "Company dashboard",
 };
 
