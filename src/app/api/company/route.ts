@@ -7,11 +7,16 @@ function sessionCookie(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const session = sessionCookie(req);
-  if (!session) return NextResponse.json({ detail: "NOT_AUTHENTICATED" }, { status: 401 });
+  if (!session) {
+    return NextResponse.json(
+      { detail: "NOT_AUTHENTICATED" },
+      { status: 401 }
+    );
+  }
 
   const body = await req.text();
 
-  const upstream = await fetch(`${API_BASE_URL}/companies/`, {
+  const upstream = await fetch(`${API_BASE_URL}/company`, {
     method: "POST",
     headers: {
       Cookie: session,
@@ -23,9 +28,16 @@ export async function POST(req: NextRequest) {
   });
 
   const text = await upstream.text();
+
   try {
-    return NextResponse.json(text ? JSON.parse(text) : null, { status: upstream.status });
+    return NextResponse.json(
+      text ? JSON.parse(text) : null,
+      { status: upstream.status }
+    );
   } catch {
-    return NextResponse.json({ detail: text || "EMPTY" }, { status: upstream.status });
+    return NextResponse.json(
+      { detail: text || "EMPTY" },
+      { status: upstream.status }
+    );
   }
 }

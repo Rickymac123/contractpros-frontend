@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   const session = sessionCookie(req);
   if (!session) return NextResponse.json({ detail: "NOT_AUTHENTICATED" }, { status: 401 });
 
-  const upstream = await fetch(`${API_BASE_URL}/companies/me`, {
+  const upstream = await fetch(`${API_BASE_URL}/company/me`, {
     headers: { Cookie: session, Accept: "application/json" },
     cache: "no-store",
   });
@@ -28,7 +28,7 @@ export async function PATCH(req: NextRequest) {
 
   const body = await req.text();
 
-  const upstream = await fetch(`${API_BASE_URL}/companies/me`, {
+  const upstream = await fetch(`${API_BASE_URL}/company/me`, {
     method: "PATCH",
     headers: {
       Cookie: session,
