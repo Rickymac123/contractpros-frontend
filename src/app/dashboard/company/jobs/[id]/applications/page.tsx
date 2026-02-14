@@ -16,7 +16,11 @@ type JobApplication = {
   talent_profession?: string | null;
   talent_location?: string | null;
   talent_day_rate?: number | null;
-  talent_avatar_url?: string | null; // optional if you add later
+  talent_avatar_url?: string | null;
+
+  // NEW (from updated backend response)
+  talent_industry?: string | null;
+  talent_engineering_discipline?: string | null;
 };
 
 export default function CompanyJobApplicationsPage() {
@@ -71,7 +75,6 @@ export default function CompanyJobApplicationsPage() {
         return;
       }
 
-      // If your backend ever returns the "old" shape, normalize it.
       const normalized = (parsed as any[]).map((a) => ({
         ...a,
         application_id: typeof a.application_id === "number" ? a.application_id : a.id,
@@ -152,82 +155,94 @@ export default function CompanyJobApplicationsPage() {
       {/* Cards */}
       {!loading && !error && apps.length > 0 && (
         <div className="space-y-3">
-          {apps.map((a) => (
-            <div
-              key={a.application_id ?? `${a.talent_id}-${a.jobpost_id}-${a.status ?? "na"}`}
-              className="rounded-2xl border border-neutral-800/80 bg-neutral-950/60 shadow-[0_0_25px_rgba(0,0,0,0.45)] overflow-hidden"
-            >
-              <div className="flex items-start gap-4 px-5 py-4">
-                {/* Avatar */}
-                <div className="shrink-0">
-                  {a.talent_avatar_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={a.talent_avatar_url}
-                      alt={a.talent_name ?? "Talent"}
-                      className="h-12 w-12 rounded-xl border border-neutral-800 object-cover"
-                    />
-                  ) : (
-                    <div className="h-12 w-12 rounded-xl border border-purple-500/40 bg-purple-950/30 flex items-center justify-center">
-                      <span className="text-sm font-semibold text-purple-200">
-                        {initials(a.talent_name)}
-                      </span>
+          {apps.map((a) => {
+            const showEngDiscipline =
+              (a.talent_profession || "").toLowerCase() === "engineering" &&
+              !!a.talent_engineering_discipline?.trim();
+
+            const metaParts = [
+              a.talent_profession || "Profession not set",
+              a.talent_location || "Location not set",
+              a.talent_industry?.trim() ? `Industry: ${a.talent_industry}` : null,
+              showEngDiscipline ? `Discipline: ${a.talent_engineering_discipline}` : null,
+            ].filter(Boolean) as string[];
+
+            return (
+              <div
+                key={a.application_id ?? `${a.talent_id}-${a.jobpost_id}-${a.status ?? "na"}`}
+                className="rounded-2xl border border-neutral-800/80 bg-neutral-950/60 shadow-[0_0_25px_rgba(0,0,0,0.45)] overflow-hidden"
+              >
+                <div className="flex items-start gap-4 px-5 py-4">
+                  {/* Avatar */}
+                  <div className="shrink-0">
+                    {a.talent_avatar_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={a.talent_avatar_url}
+                        alt={a.talent_name ?? "Talent"}
+                        className="h-12 w-12 rounded-xl border border-neutral-800 object-cover"
+                      />
+                    ) : (
+                      <div className="h-12 w-12 rounded-xl border border-purple-500/40 bg-purple-950/30 flex items-center justify-center">
+                        <span className="text-sm font-semibold text-purple-200">
+                          {initials(a.talent_name)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Main */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-white">
+                          {a.talent_name || `Talent #${a.talent_id ?? "?"}`}
+                        </p>
+
+                        <p className="mt-0.5 text-xs text-neutral-400">
+                          {metaParts.join(" · ")}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <StatusPill status={a.status} />
+                        <span className="text-[11px] text-neutral-500">
+                          App #{a.application_id}
+                        </span>
+                      </div>
                     </div>
-                  )}
+
+                    {/* Details row */}
+                    <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                      <InfoBox
+                        label="Day rate"
+                        value={
+                          typeof a.talent_day_rate === "number" ? `£${a.talent_day_rate}` : "Not set"
+                        }
+                      />
+                      <InfoBox label="Applied" value={formatDate(a.created_at) || "—"} />
+                      <InfoBox label="Updated" value={formatDate(a.updated_at) || "—"} />
+                    </div>
+
+                    {/* Notes */}
+                    <div className="mt-3 rounded-xl border border-neutral-800 bg-neutral-950/50 px-4 py-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                        Notes
+                      </p>
+                      <p className="mt-1 whitespace-pre-line text-sm text-neutral-200">
+                        {a.notes?.trim() ? a.notes : "No notes provided."}
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Main */}
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-white">
-                        {a.talent_name || `Talent #${a.talent_id ?? "?"}`}
-                      </p>
-                      <p className="mt-0.5 text-xs text-neutral-400">
-                        {a.talent_profession || "Profession not set"}
-                        {" · "}
-                        {a.talent_location || "Location not set"}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <StatusPill status={a.status} />
-                      <span className="text-[11px] text-neutral-500">
-                        App #{a.application_id}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Details row */}
-                  <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                    <InfoBox
-                      label="Day rate"
-                      value={
-                        typeof a.talent_day_rate === "number" ? `£${a.talent_day_rate}` : "Not set"
-                      }
-                    />
-                    <InfoBox label="Applied" value={formatDate(a.created_at) || "—"} />
-                    <InfoBox label="Updated" value={formatDate(a.updated_at) || "—"} />
-                  </div>
-
-                  {/* Notes */}
-                  <div className="mt-3 rounded-xl border border-neutral-800 bg-neutral-950/50 px-4 py-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                      Notes
-                    </p>
-                    <p className="mt-1 whitespace-pre-line text-sm text-neutral-200">
-                      {a.notes?.trim() ? a.notes : "No notes provided."}
-                    </p>
-                  </div>
+                {/* Footer */}
+                <div className="border-t border-neutral-800/70 px-5 py-3 text-xs text-neutral-500">
+                  Job #{a.jobpost_id} · Talent #{a.talent_id ?? "—"}
                 </div>
               </div>
-
-              {/* Footer */}
-              <div className="border-t border-neutral-800/70 px-5 py-3 text-xs text-neutral-500">
-                Job #{a.jobpost_id} · Talent #{a.talent_id ?? "—"}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
