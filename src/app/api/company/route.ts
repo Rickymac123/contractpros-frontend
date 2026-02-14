@@ -1,27 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_BASE_URL } from "@/lib/config";
 
-function sessionCookie(req: NextRequest) {
-  // backend_session stores something like "enginuity_auth=...."
-  // It may be URL-encoded depending on how it was set.
-  const v = req.cookies.get("backend_session")?.value ?? "";
+function backendAuthCookieHeader(req: NextRequest): string {
+  const raw = req.cookies.get("backend_session")?.value ?? "";
+  if (!raw) return "";
+
+  // backend_session is often URL-encoded: "enginuity_auth%3D<jwt>"
+  let decoded = raw;
   try {
-    return decodeURIComponent(v);
-  } catch {
-    return v;
-  }
+    decoded = decodeURIComponent(raw);
+  } catch {}
+
+  // If decoded is already "enginuity_auth=<jwt>", pass it through
+  if (decoded.startsWith("enginuity_auth=")) return decoded;
+
+  // If decoded looks like a JWT, prefix it
+  if (decoded.split(".").length === 3) return `enginuity_auth=${decoded}`;
+
+  // Last attempt: fix encoded '=' then decode again
+  const fixed = raw.replace(/%3D/g, "=");
+  try {
+    const d2 = decodeURIComponent(fixed);
+    if (d2.startsWith("enginuity_auth=")) return d2;
+  } catch {}
+
+  return "";
 }
 
 export async function POST(req: NextRequest) {
-  const session = sessionCookie(req);
-  if (!session) return NextResponse.json({ detail: "NOT_AUTHENTICATED" }, { status: 401 });
+  const cookie = backendAuthCookieHeader(req);
+  if (!cookie) return NextResponse.json({ detail: "NOT_AUTHENTICATED" }, { status: 401 });
 
   const body = await req.text();
 
+  // Frontend route: /api/company  -> Backend route: POST /companies/
   const upstream = await fetch(`${API_BASE_URL}/companies/`, {
     method: "POST",
     headers: {
-      Cookie: session,
+      Cookie: cookie,
       "Content-Type": "application/json",
       Accept: "application/json",
     },

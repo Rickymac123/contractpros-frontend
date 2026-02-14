@@ -1,21 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_BASE_URL } from "@/lib/config";
 
-function sessionCookie(req: NextRequest) {
-  const v = req.cookies.get("backend_session")?.value ?? "";
+function backendAuthCookieHeader(req: NextRequest): string {
+  const raw = req.cookies.get("backend_session")?.value ?? "";
+  if (!raw) return "";
+
+  let decoded = raw;
   try {
-    return decodeURIComponent(v);
-  } catch {
-    return v;
-  }
+    decoded = decodeURIComponent(raw);
+  } catch {}
+
+  if (decoded.startsWith("enginuity_auth=")) return decoded;
+
+  if (decoded.split(".").length === 3) return `enginuity_auth=${decoded}`;
+
+  const fixed = raw.replace(/%3D/g, "=");
+  try {
+    const d2 = decodeURIComponent(fixed);
+    if (d2.startsWith("enginuity_auth=")) return d2;
+  } catch {}
+
+  return "";
 }
 
 export async function GET(req: NextRequest) {
-  const session = sessionCookie(req);
-  if (!session) return NextResponse.json({ detail: "NOT_AUTHENTICATED" }, { status: 401 });
+  const cookie = backendAuthCookieHeader(req);
+  if (!cookie) return NextResponse.json({ detail: "NOT_AUTHENTICATED" }, { status: 401 });
 
+  // Frontend route: /api/company/me  -> Backend route: GET /companies/me
   const upstream = await fetch(`${API_BASE_URL}/companies/me`, {
-    headers: { Cookie: session, Accept: "application/json" },
+    headers: { Cookie: cookie, Accept: "application/json" },
     cache: "no-store",
   });
 
@@ -28,15 +42,16 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const session = sessionCookie(req);
-  if (!session) return NextResponse.json({ detail: "NOT_AUTHENTICATED" }, { status: 401 });
+  const cookie = backendAuthCookieHeader(req);
+  if (!cookie) return NextResponse.json({ detail: "NOT_AUTHENTICATED" }, { status: 401 });
 
   const body = await req.text();
 
+  // Frontend route: /api/company/me  -> Backend route: PATCH /companies/me
   const upstream = await fetch(`${API_BASE_URL}/companies/me`, {
     method: "PATCH",
     headers: {
-      Cookie: session,
+      Cookie: cookie,
       "Content-Type": "application/json",
       Accept: "application/json",
     },
