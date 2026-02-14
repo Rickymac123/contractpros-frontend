@@ -1,35 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_BASE_URL } from "@/lib/config";
 
-function backendAuthCookieHeader(req: NextRequest): string {
+function getEnginuityCookie(req: NextRequest): string {
   const raw = req.cookies.get("backend_session")?.value ?? "";
   if (!raw) return "";
 
-  let decoded = raw;
-  try {
-    decoded = decodeURIComponent(raw);
-  } catch {}
+  let v = raw;
+  try { v = decodeURIComponent(raw); } catch {}
+  v = v.split(";")[0]?.trim() ?? "";
 
-  if (decoded.startsWith("enginuity_auth=")) return decoded;
+  if (v.startsWith("enginuity_auth=")) return v;
+  if (v.split(".").length === 3) return `enginuity_auth=${v}`;
 
-  if (decoded.split(".").length === 3) return `enginuity_auth=${decoded}`;
-
-  const fixed = raw.replace(/%3D/g, "=");
-  try {
-    const d2 = decodeURIComponent(fixed);
-    if (d2.startsWith("enginuity_auth=")) return d2;
-  } catch {}
+  if (v.startsWith("enginuity_auth%3D")) {
+    const maybe = v.replace("enginuity_auth%3D", "enginuity_auth=");
+    return maybe.split(";")[0]?.trim() ?? "";
+  }
 
   return "";
 }
 
 export async function GET(req: NextRequest) {
-  const cookie = backendAuthCookieHeader(req);
+  const cookie = getEnginuityCookie(req);
   if (!cookie) return NextResponse.json({ detail: "NOT_AUTHENTICATED" }, { status: 401 });
 
-  // Frontend route: /api/company/me  -> Backend route: GET /companies/me
   const upstream = await fetch(`${API_BASE_URL}/companies/me`, {
-    headers: { Cookie: cookie, Accept: "application/json" },
+    headers: { cookie, Accept: "application/json" },
     cache: "no-store",
   });
 
@@ -42,16 +38,15 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const cookie = backendAuthCookieHeader(req);
+  const cookie = getEnginuityCookie(req);
   if (!cookie) return NextResponse.json({ detail: "NOT_AUTHENTICATED" }, { status: 401 });
 
   const body = await req.text();
 
-  // Frontend route: /api/company/me  -> Backend route: PATCH /companies/me
   const upstream = await fetch(`${API_BASE_URL}/companies/me`, {
     method: "PATCH",
     headers: {
-      Cookie: cookie,
+      cookie,
       "Content-Type": "application/json",
       Accept: "application/json",
     },

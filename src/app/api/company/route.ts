@@ -1,43 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_BASE_URL } from "@/lib/config";
 
-function backendAuthCookieHeader(req: NextRequest): string {
+function getEnginuityCookie(req: NextRequest): string {
   const raw = req.cookies.get("backend_session")?.value ?? "";
   if (!raw) return "";
 
-  // backend_session is often URL-encoded: "enginuity_auth%3D<jwt>"
-  let decoded = raw;
-  try {
-    decoded = decodeURIComponent(raw);
-  } catch {}
+  // Try to decode URL encoding
+  let v = raw;
+  try { v = decodeURIComponent(raw); } catch {}
 
-  // If decoded is already "enginuity_auth=<jwt>", pass it through
-  if (decoded.startsWith("enginuity_auth=")) return decoded;
+  // Keep only first token if anything weird got stored
+  v = v.split(";")[0]?.trim() ?? "";
 
-  // If decoded looks like a JWT, prefix it
-  if (decoded.split(".").length === 3) return `enginuity_auth=${decoded}`;
+  // Cases:
+  // 1) "enginuity_auth=<jwt>"
+  if (v.startsWith("enginuity_auth=")) return v;
 
-  // Last attempt: fix encoded '=' then decode again
-  const fixed = raw.replace(/%3D/g, "=");
-  try {
-    const d2 = decodeURIComponent(fixed);
-    if (d2.startsWith("enginuity_auth=")) return d2;
-  } catch {}
+  // 2) "<jwt>" (3 dot-separated segments)
+  if (v.split(".").length === 3) return `enginuity_auth=${v}`;
+
+  // 3) "enginuity_auth%3D<jwt>" still not decoded for some reason
+  if (v.startsWith("enginuity_auth%3D")) {
+    const maybe = v.replace("enginuity_auth%3D", "enginuity_auth=");
+    return maybe.split(";")[0]?.trim() ?? "";
+  }
 
   return "";
 }
 
 export async function POST(req: NextRequest) {
-  const cookie = backendAuthCookieHeader(req);
+  const cookie = getEnginuityCookie(req);
   if (!cookie) return NextResponse.json({ detail: "NOT_AUTHENTICATED" }, { status: 401 });
 
   const body = await req.text();
 
-  // Frontend route: /api/company  -> Backend route: POST /companies/
   const upstream = await fetch(`${API_BASE_URL}/companies/`, {
     method: "POST",
     headers: {
-      Cookie: cookie,
+      cookie, // send ONLY enginuity_auth=<jwt>
       "Content-Type": "application/json",
       Accept: "application/json",
     },
