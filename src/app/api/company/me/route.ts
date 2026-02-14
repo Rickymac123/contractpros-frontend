@@ -1,23 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_BASE_URL } from "@/lib/config";
 
-function getAuthCookieHeader(req: NextRequest): string | null {
-  const raw = req.cookies.get("backend_session")?.value;
-  if (!raw) return null;
+function backendCookieHeader(req: NextRequest) {
+  const raw = req.cookies.get("backend_session")?.value ?? "";
+  if (!raw) return "";
 
-  const decoded = decodeURIComponent(raw);
-  if (decoded.startsWith("enginuity_auth=")) return decoded;
-  return `enginuity_auth=${decoded}`;
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
 }
 
 export async function GET(req: NextRequest) {
-  const cookiePair = getAuthCookieHeader(req);
-  if (!cookiePair) {
+  const cookieHeader = backendCookieHeader(req);
+  if (!cookieHeader) {
     return NextResponse.json({ detail: "NOT_AUTHENTICATED" }, { status: 401 });
   }
 
   const upstream = await fetch(`${API_BASE_URL}/companies/me`, {
-    headers: { Cookie: cookiePair, Accept: "application/json" },
+    headers: { Cookie: cookieHeader, Accept: "application/json" },
     cache: "no-store",
   });
 
@@ -30,8 +32,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const cookiePair = getAuthCookieHeader(req);
-  if (!cookiePair) {
+  const cookieHeader = backendCookieHeader(req);
+  if (!cookieHeader) {
     return NextResponse.json({ detail: "NOT_AUTHENTICATED" }, { status: 401 });
   }
 
@@ -40,7 +42,7 @@ export async function PATCH(req: NextRequest) {
   const upstream = await fetch(`${API_BASE_URL}/companies/me`, {
     method: "PATCH",
     headers: {
-      Cookie: cookiePair,
+      Cookie: cookieHeader,
       "Content-Type": "application/json",
       Accept: "application/json",
     },
