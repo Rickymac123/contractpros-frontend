@@ -121,5 +121,109 @@ export async function POST(req: NextRequest) {
       { detail: typeof error?.message === "string" ? error.message : "INTERNAL_LOGIN_ERROR" },
       { status: 500 },
     );
+  }// src/app/api/login/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { API_BASE_URL } from "@/lib/config";
+
+function pickAuthCookieFromSetCookieHeader(setCookieHeader: string): string {
+  // Backend returns: "enginuity_auth=...; Path=/; HttpOnly; ..."
+  // There may be multiple cookies in one header; we only want enginuity_auth=...
+  const parts = setCookieHeader.split(/,(?=\s*\w+=)/g); // split on cookie boundaries
+  for (const p of parts) {
+    const trimmed = p.trim();
+    if (trimmed.startsWith("enginuity_auth=")) {
+      return trimmed.split(";")[0]; // "enginuity_auth=..."
+    }
   }
+  return "";
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = (await req.json().catch(() => null)) as { email?: string; password?: string } | null;
+
+    const email = body?.email?.trim() ?? "";
+    const password = body?.password ?? "";
+
+    if (!email || !password) {
+      return NextResponse.json({ detail: "MISSING_CREDENTIALS" }, { status: 400 });
+    }
+
+    const form = new URLSearchParams();
+    form.set("grant_type", "password");
+    form.set("username", email);
+    form.set("password", password);
+
+    const loginRes = await fetch(`${API_BASE_URL}/auth/jwt/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Accept: "application/json",
+      },
+      body: form.toString(),
+    });
+
+    const loginText = await loginRes.text();
+
+    if (!loginRes.ok) {
+      let detail: unknown = loginText || `LOGIN_STATUS_${loginRes.status}`;
+      try {
+        const parsed = JSON.parse(loginText);
+        detail = parsed?.detail ?? detail;
+      } catch {}
+      return NextResponse.json({ detail }, { status: loginRes.status });
+    }
+
+    // Use standard header access (works on Vercel/Node)
+    const rawSetCookie = loginRes.headers.get("set-cookie") ?? "";
+    const cookiePair = pickAuthCookieFromSetCookieHeader(rawSetCookie);
+
+    if (!cookiePair) {
+      return NextResponse.json({ detail: "NO_AUTH_COOKIE" }, { status: 500 });
+    }
+
+    // Verify user (optional but you’re using it)
+    const meRes = await fetch(`${API_BASE_URL}/users/me`, {
+      headers: { Cookie: cookiePair, Accept: "application/json" },
+      cache: "no-store",
+    });
+
+    const meText = await meRes.text();
+    if (!meRes.ok) {
+      return NextResponse.json({ detail: "FAILED_TO_FETCH_USER" }, { status: meRes.status });
+    }
+
+    const user = meText ? JSON.parse(meText) : null;
+
+    if (user && user.is_verified === false) {
+      const res = NextResponse.json({ detail: "EMAIL_NOT_VERIFIED" }, { status: 403 });
+      res.cookies.set("backend_session", "", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "lax",
+        path: "/",
+        maxAge: 0,
+        domain: ".contractpros.co.uk",
+      });
+      return res;
+    }
+
+    // IMPORTANT: cookie domain for www + apex
+    const res = NextResponse.json({ user }, { status: 200 });
+    res.cookies.set("backend_session", cookiePair, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+      domain: ".contractpros.co.uk",
+    });
+
+    return res;
+  } catch (error: any) {
+    return NextResponse.json(
+      { detail: typeof error?.message === "string" ? error.message : "INTERNAL_LOGIN_ERROR" },
+      { status: 500 },
+    );
+  }
+}
 }
