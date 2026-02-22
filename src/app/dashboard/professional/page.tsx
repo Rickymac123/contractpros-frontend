@@ -54,7 +54,6 @@ export default function ProfessionalDashboardPage() {
       (a) => (a.status ?? "").toLowerCase() === "rejected",
     ).length;
 
-    // placeholder until bookings exist for professionals
     const upcomingBookings = 0;
 
     return { review, rejected, upcomingBookings };
@@ -124,6 +123,13 @@ export default function ProfessionalDashboardPage() {
                 className="rounded-xl border border-neutral-800 bg-neutral-950/40 px-4 py-2 text-xs text-neutral-200 transition hover:bg-neutral-900"
               >
                 View my applications
+              </Link>
+
+              <Link
+                href="/dashboard/professional/availability"
+                className="rounded-xl border border-neutral-800 bg-neutral-950/40 px-4 py-2 text-xs text-neutral-200 transition hover:bg-neutral-900"
+              >
+                Manage availability
               </Link>
             </div>
           </div>

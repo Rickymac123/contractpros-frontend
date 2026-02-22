@@ -1,6 +1,5 @@
 "use client";
 
-
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -9,6 +8,19 @@ type LoggedInUser = {
   role?: string | null;
   is_superuser?: boolean | null;
 };
+
+function extractDetail(text: string, status: number) {
+  if (!text) return `STATUS ${status}: EMPTY`;
+  try {
+    const parsed = JSON.parse(text);
+    if (parsed && typeof parsed === "object" && "detail" in parsed) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const d = (parsed as any).detail;
+      return typeof d === "string" ? d : JSON.stringify(d);
+    }
+  } catch {}
+  return `STATUS ${status}: ${text}`;
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,24 +45,20 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setInfo(null);
     setLoading(true);
 
     try {
       const res = await fetch("/api/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
       });
 
       const text = await res.text();
 
       if (!res.ok) {
-        let detail = text;
-        try {
-          const parsed = JSON.parse(text);
-          detail = parsed?.detail ?? detail;
-        } catch {}
-        setError(typeof detail === "string" ? detail : "Invalid credentials");
+        setError(extractDetail(text, res.status));
         setLoading(false);
         return;
       }
@@ -60,19 +68,18 @@ export default function LoginPage() {
       try {
         const parsed = text ? JSON.parse(text) : null;
         const user: LoggedInUser | null = parsed?.user ?? null;
-        role = (user?.role ?? (user?.is_superuser ? "admin" : "company")) || "company";
+        role =
+          (user?.role ?? (user?.is_superuser ? "admin" : "company")) || "company";
       } catch {
-        // fallback if parsing fails for some reason
         role = "company";
       }
 
-      // ✅ role-based landing
       if (role === "professional") router.replace("/dashboard/professional");
       else if (role === "agency") router.replace("/dashboard/agency");
       else if (role === "admin") router.replace("/dashboard/admin");
       else router.replace("/dashboard/company");
     } catch (err: any) {
-      setError(err?.message ?? "Login failed");
+      setError(typeof err?.message === "string" ? err.message : "Login failed");
       setLoading(false);
     }
   };
@@ -81,7 +88,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm rounded-3xl border border-neutral-800 bg-neutral-950/70 p-6 shadow-[0_0_40px_rgba(0,0,0,0.6)]">
         <header className="mb-6 space-y-1 text-center">
-          <h1 className="text-2xl font-semibold text-white">Contract Pro's UK</h1>
+          <h1 className="text-2xl font-semibold text-white">Contract Pro&apos;s UK</h1>
           <p className="text-sm text-neutral-400">Sign in to your dashboard</p>
         </header>
 
@@ -92,7 +99,7 @@ export default function LoginPage() {
         )}
 
         {error && (
-          <div className="mb-4 rounded-xl border border-red-500/40 bg-red-950/40 px-4 py-3 text-sm text-red-200">
+          <div className="mb-4 rounded-xl border border-red-500/40 bg-red-950/40 px-4 py-3 text-sm text-red-200 whitespace-pre-wrap">
             {error}
           </div>
         )}
