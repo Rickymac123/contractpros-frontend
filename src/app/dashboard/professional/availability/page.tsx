@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import dayGridPlugin from "@fullcalendar/daygrid";
-import interactionPlugin, { DateSelectArg, EventClickArg, EventChangeArg } from "@fullcalendar/interaction";
+import interactionPlugin from "@fullcalendar/interaction";
+import type { DateSelectArg, EventClickArg, EventChangeArg } from "@fullcalendar/core";
 import rrulePlugin from "@fullcalendar/rrule";
 import { RRule } from "rrule";
 
