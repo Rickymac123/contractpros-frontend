@@ -118,6 +118,14 @@ export default function ProfessionalDashboardPage() {
                 Edit my profile
               </Link>
 
+              {/* NEW BUTTON INSERTED HERE */}
+              <Link
+                href="/dashboard/professional/preview"
+                className="rounded-xl border border-neutral-800 bg-neutral-950/40 px-4 py-2 text-xs text-neutral-200 transition hover:bg-neutral-900"
+              >
+                Preview my profile
+              </Link>
+
               <Link
                 href="/dashboard/professional/applications"
                 className="rounded-xl border border-neutral-800 bg-neutral-950/40 px-4 py-2 text-xs text-neutral-200 transition hover:bg-neutral-900"
