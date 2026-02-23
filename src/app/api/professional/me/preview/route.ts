@@ -1,16 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_BASE_URL } from "@/lib/config";
 
-function getBackendSessionCookie(req: NextRequest) {
-  return req.cookies.get("backend_session")?.value || "";
+function getBackendAuthCookiePair(req: NextRequest) {
+  // Stored on the frontend domain as URL-encoded "enginuity_auth=<jwt>"
+  const raw = req.cookies.get("backend_session")?.value || "";
+  if (!raw) return "";
+
+  const decoded = decodeURIComponent(raw);
+
+  // If it's already "enginuity_auth=...", use it
+  if (decoded.startsWith("enginuity_auth=")) return decoded;
+
+  // If someone stored just the token value, wrap it
+  return `enginuity_auth=${decoded}`;
 }
 
 export async function GET(req: NextRequest) {
-  const cookiePair = getBackendSessionCookie(req);
-  if (!cookiePair) return NextResponse.json({ detail: "UNAUTHENTICATED" }, { status: 401 });
+  const cookiePair = getBackendAuthCookiePair(req);
+  if (!cookiePair) {
+    return NextResponse.json({ detail: "UNAUTHENTICATED" }, { status: 401 });
+  }
 
   const res = await fetch(`${API_BASE_URL}/professional/me/preview`, {
-    headers: { Accept: "application/json", Cookie: cookiePair },
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      Cookie: cookiePair, // must be "enginuity_auth=<jwt>"
+    },
     cache: "no-store",
   });
 
