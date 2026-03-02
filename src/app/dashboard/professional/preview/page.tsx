@@ -243,7 +243,7 @@ export default function ProfessionalPreviewPage() {
             <div className="p-6">
               <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
                 <div className="flex items-start gap-4">
-                  <div className="h-16 w-16 rounded-2xl border border-neutral-800 bg-neutral-900/40 overflow-hidden shrink-0">
+                  <div className="h-32 w-32 rounded-2xl border border-neutral-800 bg-neutral-900/40 overflow-hidden shrink-0">
                     {/* Use <img> to avoid next/image remote domain config crashes */}
                     {profile.avatar_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
