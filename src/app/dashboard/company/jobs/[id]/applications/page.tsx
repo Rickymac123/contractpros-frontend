@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
@@ -18,7 +19,6 @@ type JobApplication = {
   talent_day_rate?: number | null;
   talent_avatar_url?: string | null;
 
-  // NEW (from updated backend response)
   talent_industry?: string | null;
   talent_engineering_discipline?: string | null;
 };
@@ -97,7 +97,6 @@ export default function CompanyJobApplicationsPage() {
       return;
     }
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobId]);
 
   const backToJob = () => {
@@ -107,7 +106,6 @@ export default function CompanyJobApplicationsPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 space-y-6">
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Applications</h1>
@@ -132,7 +130,6 @@ export default function CompanyJobApplicationsPage() {
         </div>
       </div>
 
-      {/* States */}
       {loading && (
         <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-6 py-10 text-center text-sm text-neutral-400">
           Loading applications…
@@ -152,7 +149,6 @@ export default function CompanyJobApplicationsPage() {
         </div>
       )}
 
-      {/* Cards */}
       {!loading && !error && apps.length > 0 && (
         <div className="space-y-3">
           {apps.map((a) => {
@@ -173,7 +169,6 @@ export default function CompanyJobApplicationsPage() {
                 className="rounded-2xl border border-neutral-800/80 bg-neutral-950/60 shadow-[0_0_25px_rgba(0,0,0,0.45)] overflow-hidden"
               >
                 <div className="flex items-start gap-4 px-5 py-4">
-                  {/* Avatar */}
                   <div className="shrink-0">
                     {a.talent_avatar_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -191,7 +186,6 @@ export default function CompanyJobApplicationsPage() {
                     )}
                   </div>
 
-                  {/* Main */}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="min-w-0">
@@ -206,13 +200,20 @@ export default function CompanyJobApplicationsPage() {
 
                       <div className="flex items-center gap-2">
                         <StatusPill status={a.status} />
+
+                        <Link
+                          href={`/dashboard/company/applications/${a.application_id}`}
+                          className="rounded-lg border border-purple-500/40 bg-purple-950/30 px-2 py-1 text-[11px] font-medium text-purple-200 transition hover:bg-purple-900/40"
+                        >
+                          View profile
+                        </Link>
+
                         <span className="text-[11px] text-neutral-500">
                           App #{a.application_id}
                         </span>
                       </div>
                     </div>
 
-                    {/* Details row */}
                     <div className="mt-3 grid gap-2 sm:grid-cols-3">
                       <InfoBox
                         label="Day rate"
@@ -224,7 +225,6 @@ export default function CompanyJobApplicationsPage() {
                       <InfoBox label="Updated" value={formatDate(a.updated_at) || "—"} />
                     </div>
 
-                    {/* Notes */}
                     <div className="mt-3 rounded-xl border border-neutral-800 bg-neutral-950/50 px-4 py-3">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
                         Notes
@@ -236,7 +236,6 @@ export default function CompanyJobApplicationsPage() {
                   </div>
                 </div>
 
-                {/* Footer */}
                 <div className="border-t border-neutral-800/70 px-5 py-3 text-xs text-neutral-500">
                   Job #{a.jobpost_id} · Talent #{a.talent_id ?? "—"}
                 </div>
@@ -248,8 +247,6 @@ export default function CompanyJobApplicationsPage() {
     </div>
   );
 }
-
-/* ---------- helpers ---------- */
 
 function InfoBox({ label, value }: { label: string; value: string }) {
   return (
