@@ -13,14 +13,14 @@ function getBackendAuthCookie(req: NextRequest) {
 
 export async function GET(
   req: NextRequest,
-  context: { params: Promise<{ applicationId: string }> },
+  { params }: { params: Promise<{ applicationId: string }> },
 ) {
   const cookiePair = getBackendAuthCookie(req);
   if (!cookiePair) {
     return NextResponse.json({ detail: "UNAUTHENTICATED" }, { status: 401 });
   }
 
-  const { applicationId } = await context.params;
+  const { applicationId } = await params;
 
   const res = await fetch(
     `${API_BASE_URL}/company/applications/${applicationId}/professional-profile`,
