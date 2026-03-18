@@ -35,3 +35,31 @@ export async function GET(req: NextRequest) {
     },
   });
 }
+
+export async function POST(req: NextRequest) {
+  const cookiePair = getBackendAuthCookie(req);
+  if (!cookiePair) {
+    return NextResponse.json({ detail: "UNAUTHENTICATED" }, { status: 401 });
+  }
+
+  const body = await req.text();
+
+  const res = await fetch(`${API_BASE_URL}/professional/qualifications`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": req.headers.get("content-type") ?? "application/json",
+      Cookie: cookiePair,
+    },
+    body,
+    cache: "no-store",
+  });
+
+  const text = await res.text();
+  return new NextResponse(text || "", {
+    status: res.status,
+    headers: {
+      "Content-Type": res.headers.get("content-type") ?? "application/json",
+    },
+  });
+}
