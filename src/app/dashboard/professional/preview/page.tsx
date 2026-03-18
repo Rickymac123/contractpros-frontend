@@ -12,8 +12,20 @@ type Review = {
   reviewer_role?: string | null;
   created_at?: string | null;
   verified_at?: string | null;
-  status?: string | null; // pending|verified|rejected
+  status?: string | null;
   is_public?: boolean;
+};
+
+type Qualification = {
+  id: number;
+  talent_id: number;
+  name: string;
+  issuer?: string | null;
+  credential_ref?: string | null;
+  is_verified: boolean;
+  verified_by_user_id?: number | null;
+  verified_at?: string | null;
+  created_at?: string | null;
 };
 
 type Profile = {
@@ -31,6 +43,7 @@ type Profile = {
   day_rate?: number | null;
   hourly_rate?: number | null;
   work_radius_miles?: number | null;
+  skills?: string | null;
 };
 
 type PreviewResponse = {
@@ -59,14 +72,30 @@ function clamp(n: number, min: number, max: number) {
 
 function fmtMoney(n?: number | null) {
   if (n == null || Number.isNaN(Number(n))) return null;
-  return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: 0 }).format(n);
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+    maximumFractionDigits: 0,
+  }).format(n);
 }
 
 function fmtDate(iso?: string | null) {
   if (!iso) return null;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleDateString("en-GB", { year: "numeric", month: "short", day: "2-digit" });
+  return d.toLocaleDateString("en-GB", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+  });
+}
+
+function parseSkills(skills?: string | null) {
+  if (!skills?.trim()) return [];
+  return skills
+    .split(/\r?\n|,/)
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 function StarRow({ value }: { value: number }) {
@@ -122,8 +151,23 @@ function StarRow({ value }: { value: number }) {
   );
 }
 
+function VerifiedTick() {
+  return (
+    <span
+      className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-purple-600/20 text-purple-300 ring-1 ring-purple-500/30"
+      title="Verified qualification"
+      aria-label="Verified qualification"
+    >
+      <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 fill-current" aria-hidden="true">
+        <path d="M10 1.8l2.07 2.08 2.93-.42 1.35 2.64 2.64 1.35-.42 2.93L20 10l-1.43 2.62.42 2.93-2.64 1.35-1.35 2.64-2.93-.42L10 20l-2.62-1.43-2.93.42-1.35-2.64-2.64-1.35.42-2.93L0 10l1.43-2.62-.42-2.93 2.64-1.35 1.35-2.64 2.93.42zM8.6 13.9l5.1-5.1-1.06-1.06-4.04 4.04-1.8-1.8-1.06 1.06z" />
+      </svg>
+    </span>
+  );
+}
+
 export default function ProfessionalPreviewPage() {
   const [data, setData] = useState<PreviewResponse | null>(null);
+  const [qualifications, setQualifications] = useState<Qualification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -132,19 +176,36 @@ export default function ProfessionalPreviewPage() {
       setLoading(true);
       setError(null);
 
-      const res = await fetch("/api/professional/me/preview", { cache: "no-store" });
-      const text = await res.text();
+      const [previewRes, qualificationsRes] = await Promise.all([
+        fetch("/api/professional/me/preview", { cache: "no-store" }),
+        fetch("/api/professional/qualifications", { cache: "no-store" }),
+      ]);
 
-      if (!res.ok) {
+      const previewText = await previewRes.text();
+      const qualificationsText = await qualificationsRes.text();
+
+      if (!previewRes.ok) {
         setData(null);
-        setError(extractDetail(text, res.status));
+        setQualifications([]);
+        setError(extractDetail(previewText, previewRes.status));
         return;
       }
 
-      const parsed = text ? (JSON.parse(text) as PreviewResponse) : {};
-      setData(parsed ?? {});
+      if (!qualificationsRes.ok) {
+        setData(null);
+        setQualifications([]);
+        setError(extractDetail(qualificationsText, qualificationsRes.status));
+        return;
+      }
+
+      const parsedPreview = previewText ? (JSON.parse(previewText) as PreviewResponse) : {};
+      const parsedQualifications = qualificationsText ? (JSON.parse(qualificationsText) as Qualification[]) : [];
+
+      setData(parsedPreview ?? {});
+      setQualifications(Array.isArray(parsedQualifications) ? parsedQualifications : []);
     } catch (e: any) {
       setData(null);
+      setQualifications([]);
       setError(typeof e?.message === "string" ? e.message : "FAILED_TO_LOAD");
     } finally {
       setLoading(false);
@@ -153,14 +214,13 @@ export default function ProfessionalPreviewPage() {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const profile = data?.profile ?? {};
-  const reviews = Array.isArray(data?.reviews) ? (data!.reviews as Review[]) : [];
+  const reviews = Array.isArray(data?.reviews) ? (data.reviews as Review[]) : [];
+  const skills = useMemo(() => parseSkills(profile.skills), [profile.skills]);
 
   const verifiedReviews = useMemo(() => {
-    // show verified/public only (safe default for “preview” that mirrors what a client sees)
     return reviews.filter((r) => (r.status ? r.status === "verified" : true) && (r.is_public ?? true));
   }, [reviews]);
 
@@ -244,7 +304,6 @@ export default function ProfessionalPreviewPage() {
               <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
                 <div className="flex items-start gap-4">
                   <div className="h-32 w-32 rounded-2xl border border-neutral-800 bg-neutral-900/40 overflow-hidden shrink-0">
-                    {/* Use <img> to avoid next/image remote domain config crashes */}
                     {profile.avatar_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -283,6 +342,65 @@ export default function ProfessionalPreviewPage() {
                   <div className="mt-2 text-sm text-neutral-200 whitespace-pre-wrap">{profile.bio}</div>
                 </div>
               ) : null}
+            </div>
+          </div>
+
+          {/* Skills & qualifications */}
+          <div className="rounded-3xl border border-neutral-800/80 bg-neutral-950/60 shadow-[0_0_40px_rgba(0,0,0,0.55)] overflow-hidden">
+            <div className="border-b border-neutral-800/80 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-sm font-medium text-neutral-200">Skills & qualifications</h2>
+              <div className="text-xs text-neutral-500">Professional capability snapshot</div>
+            </div>
+
+            <div className="p-6 grid gap-4 md:grid-cols-2">
+              <div className="rounded-2xl border border-neutral-800 bg-neutral-950/40 p-4">
+                <div className="text-xs font-medium text-neutral-300">Core skills</div>
+                {skills.length ? (
+                  <ul className="mt-3 space-y-2">
+                    {skills.map((skill, i) => (
+                      <li key={`${skill}-${i}`} className="flex items-start gap-2 text-sm text-neutral-200">
+                        <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-purple-400" />
+                        <span>{skill}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="mt-2 text-sm text-neutral-500">No skills added yet.</div>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-neutral-800 bg-neutral-950/40 p-4">
+                <div className="text-xs font-medium text-neutral-300">Qualifications</div>
+                {qualifications.length ? (
+                  <ul className="mt-3 space-y-3">
+                    {qualifications.map((qualification) => (
+                      <li key={qualification.id} className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-neutral-200">{qualification.name}</div>
+                          <div className="mt-1 text-xs text-neutral-500">
+                            {[qualification.issuer, qualification.credential_ref].filter(Boolean).join(" • ") || "No additional details"}
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 pt-0.5">
+                          {qualification.is_verified ? (
+                            <VerifiedTick />
+                          ) : (
+                            <span
+                              className="inline-flex rounded-full border border-neutral-700 px-2 py-0.5 text-[10px] text-neutral-400"
+                              title="Not verified"
+                            >
+                              Unverified
+                            </span>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="mt-2 text-sm text-neutral-500">No qualifications added yet.</div>
+                )}
+              </div>
             </div>
           </div>
 
