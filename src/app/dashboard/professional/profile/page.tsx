@@ -32,6 +32,19 @@ type TalentProfile = {
   cv_url?: string | null;
 
   bio?: string | null;
+  skills?: string | null;
+};
+
+type Qualification = {
+  id: number;
+  talent_id: number;
+  name: string;
+  issuer?: string | null;
+  credential_ref?: string | null;
+  is_verified: boolean;
+  verified_by_user_id?: number | null;
+  verified_at?: string | null;
+  created_at?: string | null;
 };
 
 function extractDetail(text: string, status: number) {
@@ -82,8 +95,6 @@ function labelFor(
   return hit?.label ?? "";
 }
 
-/* ---------------- Profile completeness helpers ---------------- */
-
 function isFilled(v: unknown) {
   if (v == null) return false;
   if (typeof v === "string") return v.trim().length > 0;
@@ -106,6 +117,7 @@ function computeProfessionalCompleteness(p: {
   avatar_url?: string | null;
   cv_url?: string | null;
   bio?: string | null;
+  skills?: string | null;
 }) {
   const items = [
     { key: "first_name", label: "First name", w: 10, ok: isFilled(p.first_name) },
@@ -113,10 +125,8 @@ function computeProfessionalCompleteness(p: {
     { key: "profession", label: "Profession", w: 15, ok: isFilled(p.profession) },
     { key: "postcode", label: "Postcode", w: 10, ok: isFilled(p.postcode) },
     { key: "work_radius_miles", label: "Work radius", w: 5, ok: isFilled(p.work_radius_miles) },
-
     { key: "ir35_preference", label: "IR35 preference", w: 5, ok: isFilled(p.ir35_preference) },
     { key: "rate_type", label: "Rate type", w: 5, ok: isFilled(p.rate_type) },
-
     {
       key: "rate_value",
       label: "Rate (day/hour)",
@@ -126,11 +136,10 @@ function computeProfessionalCompleteness(p: {
         (p.rate_type === "hour" && isFilled(p.hourly_rate)) ||
         (p.rate_type == null && (isFilled(p.day_rate) || isFilled(p.hourly_rate))),
     },
-
     { key: "avatar_url", label: "Profile photo", w: 10, ok: isFilled(p.avatar_url) },
-    { key: "cv_url", label: "CV uploaded", w: 15, ok: isFilled(p.cv_url) },
+    { key: "cv_url", label: "CV uploaded", w: 10, ok: isFilled(p.cv_url) },
     { key: "bio", label: "Bio", w: 10, ok: isFilled(p.bio) },
-
+    { key: "skills", label: "Skills", w: 5, ok: isFilled(p.skills) },
     { key: "engineering_discipline", label: "Engineering discipline", w: 5, ok: isFilled(p.engineering_discipline) },
     { key: "industry", label: "Industry", w: 5, ok: isFilled(p.industry) },
   ];
@@ -143,28 +152,42 @@ function computeProfessionalCompleteness(p: {
   return { percent, missing };
 }
 
-/* -------------------------------------------------------------- */
+function VerifiedTick() {
+  return (
+    <span
+      className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-purple-600/20 text-purple-300 ring-1 ring-purple-500/30"
+      title="Verified qualification"
+      aria-label="Verified qualification"
+    >
+      <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 fill-current" aria-hidden="true">
+        <path d="M10 1.8l2.07 2.08 2.93-.42 1.35 2.64 2.64 1.35-.42 2.93L20 10l-1.43 2.62.42 2.93-2.64 1.35-1.35 2.64-2.93-.42L10 20l-2.62-1.43-2.93.42-1.35-2.64-2.64-1.35.42-2.93L0 10l1.43-2.62-.42-2.93 2.64-1.35 1.35-2.64 2.93.42zM8.6 13.9l5.1-5.1-1.06-1.06-4.04 4.04-1.8-1.8-1.06 1.06z" />
+      </svg>
+    </span>
+  );
+}
 
 export default function ProfessionalProfilePage() {
   const [profile, setProfile] = useState<TalentProfile | null>(null);
+  const [qualifications, setQualifications] = useState<Qualification[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingCv, setUploadingCv] = useState(false);
+  const [creatingQualification, setCreatingQualification] = useState(false);
+  const [deletingQualificationId, setDeletingQualificationId] = useState<number | null>(null);
 
   const [info, setInfo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // form
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
 
-  const [profession, setProfession] = useState(""); // dropdown value (or custom if Other)
+  const [profession, setProfession] = useState("");
   const [professionOther, setProfessionOther] = useState("");
 
   const [engineeringDiscipline, setEngineeringDiscipline] = useState<string>("");
-  const [industry, setIndustry] = useState(""); // dropdown value (or custom if Other)
+  const [industry, setIndustry] = useState("");
   const [industryOther, setIndustryOther] = useState("");
 
   const [postcode, setPostcode] = useState("");
@@ -182,6 +205,11 @@ export default function ProfessionalProfilePage() {
   const [cvUrl, setCvUrl] = useState<string>("");
 
   const [bio, setBio] = useState("");
+  const [skills, setSkills] = useState("");
+
+  const [qualificationName, setQualificationName] = useState("");
+  const [qualificationIssuer, setQualificationIssuer] = useState("");
+  const [qualificationRef, setQualificationRef] = useState("");
 
   const hasProfile = useMemo(() => !!profile?.id, [profile]);
 
@@ -206,24 +234,26 @@ export default function ProfessionalProfilePage() {
       setError(null);
       setInfo(null);
 
-      const res = await fetch("/api/professional/talent/me", { cache: "no-store" });
-      const text = await res.text();
+      const [profileRes, qualificationsRes] = await Promise.all([
+        fetch("/api/professional/talent/me", { cache: "no-store" }),
+        fetch("/api/professional/qualifications", { cache: "no-store" }),
+      ]);
 
-      if (!res.ok) {
-        if (res.status === 404) {
+      const profileText = await profileRes.text();
+      const qualificationsText = await qualificationsRes.text();
+
+      if (!profileRes.ok) {
+        if (profileRes.status === 404) {
           setProfile(null);
+          setQualifications([]);
 
           setFirstName("");
           setLastName("");
-
           setProfession("");
           setProfessionOther("");
-
           setEngineeringDiscipline("");
-
           setIndustry("");
           setIndustryOther("");
-
           setPostcode("");
           setLocation("");
           setWorkRadiusMiles("");
@@ -234,15 +264,24 @@ export default function ProfessionalProfilePage() {
           setAvatarUrl("");
           setCvUrl("");
           setBio("");
-
+          setSkills("");
           return;
         }
-        setError(extractDetail(text, res.status));
+
+        setError(extractDetail(profileText, profileRes.status));
         return;
       }
 
-      const data = text ? (JSON.parse(text) as TalentProfile) : null;
+      if (!qualificationsRes.ok) {
+        setError(extractDetail(qualificationsText, qualificationsRes.status));
+        return;
+      }
+
+      const data = profileText ? (JSON.parse(profileText) as TalentProfile) : null;
+      const qualificationsData = qualificationsText ? (JSON.parse(qualificationsText) as Qualification[]) : [];
+
       setProfile(data);
+      setQualifications(Array.isArray(qualificationsData) ? qualificationsData : []);
 
       setFirstName((data?.first_name ?? "") as string);
       setLastName((data?.last_name ?? "") as string);
@@ -261,7 +300,6 @@ export default function ProfessionalProfilePage() {
       setLocation((data?.location ?? "") as string);
 
       setWorkRadiusMiles(data?.work_radius_miles != null ? String(data.work_radius_miles) : "");
-
       setIr35Preference((data?.ir35_preference ?? "either") as string);
 
       setRateType((data?.rate_type ?? "day") as string);
@@ -272,6 +310,7 @@ export default function ProfessionalProfilePage() {
       setCvUrl((data?.cv_url ?? "") as string);
 
       setBio((data?.bio ?? "") as string);
+      setSkills((data?.skills ?? "") as string);
     } catch (e: any) {
       setError(typeof e?.message === "string" ? e.message : "FAILED_TO_LOAD_PROFILE");
     } finally {
@@ -281,7 +320,6 @@ export default function ProfessionalProfilePage() {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const uploadAvatar = async (file: File) => {
@@ -399,27 +437,20 @@ export default function ProfessionalProfilePage() {
       const payload: any = {
         first_name: firstName.trim(),
         last_name: lastName.trim(),
-
         profession: professionFinal,
-
         engineering_discipline: engineeringDiscipline.trim() || null,
         industry: industryFinal || null,
-
         postcode: postcode.trim(),
         location: location.trim() || null,
-
         work_radius_miles: radius,
-
         ir35_preference: ir35Preference || null,
-
         rate_type: rateType || null,
         day_rate: day,
         hourly_rate: hour,
-
         avatar_url: avatarUrl.trim() || null,
         cv_url: cvUrl.trim() || null,
-
         bio: bio.trim() || null,
+        skills: skills.trim() || null,
       };
 
       if (!hasProfile) {
@@ -456,7 +487,73 @@ export default function ProfessionalProfilePage() {
     }
   };
 
-  const busy = saving || uploadingAvatar || uploadingCv;
+  const addQualification = async () => {
+    setCreatingQualification(true);
+    setError(null);
+    setInfo(null);
+
+    try {
+      if (!qualificationName.trim()) {
+        setError("QUALIFICATION_NAME_REQUIRED");
+        return;
+      }
+
+      const res = await fetch("/api/professional/qualifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          name: qualificationName.trim(),
+          issuer: qualificationIssuer.trim() || null,
+          credential_ref: qualificationRef.trim() || null,
+        }),
+      });
+
+      const text = await res.text();
+      if (!res.ok) {
+        setError(extractDetail(text, res.status));
+        return;
+      }
+
+      setQualificationName("");
+      setQualificationIssuer("");
+      setQualificationRef("");
+      setInfo("Qualification added");
+      await load();
+    } finally {
+      setCreatingQualification(false);
+    }
+  };
+
+  const deleteQualification = async (qualificationId: number) => {
+    setDeletingQualificationId(qualificationId);
+    setError(null);
+    setInfo(null);
+
+    try {
+      const res = await fetch(`/api/professional/qualifications/${qualificationId}`, {
+        method: "DELETE",
+        headers: { Accept: "application/json" },
+      });
+
+      if (!res.ok && res.status !== 204) {
+        const text = await res.text();
+        setError(extractDetail(text, res.status));
+        return;
+      }
+
+      setInfo("Qualification removed");
+      await load();
+    } finally {
+      setDeletingQualificationId(null);
+    }
+  };
+
+  const busy =
+    saving ||
+    uploadingAvatar ||
+    uploadingCv ||
+    creatingQualification ||
+    deletingQualificationId != null;
 
   const completeness = useMemo(() => {
     const day = dayRate.trim() ? Number(dayRate) : null;
@@ -478,6 +575,7 @@ export default function ProfessionalProfilePage() {
       avatar_url: avatarUrl,
       cv_url: cvUrl,
       bio,
+      skills,
     });
   }, [
     firstName,
@@ -496,6 +594,7 @@ export default function ProfessionalProfilePage() {
     avatarUrl,
     cvUrl,
     bio,
+    skills,
   ]);
 
   return (
@@ -576,7 +675,6 @@ export default function ProfessionalProfilePage() {
           </div>
 
           <div className="px-6 py-6 space-y-6">
-            {/* Avatar */}
             <div className="flex flex-wrap items-start gap-4">
               <div className="shrink-0">
                 {avatarUrl ? (
@@ -621,7 +719,6 @@ export default function ProfessionalProfilePage() {
               </div>
             </div>
 
-            {/* CV */}
             <div className="rounded-2xl border border-neutral-800/80 bg-neutral-950/50 p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -845,6 +942,114 @@ export default function ProfessionalProfilePage() {
                 placeholder="Short summary of your experience…"
               />
             </Field>
+
+            <Field label="Skills">
+              <textarea
+                value={skills}
+                onChange={(e) => setSkills(e.target.value)}
+                rows={5}
+                className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
+                placeholder={`One skill per line\n\nPLC programming\nFault finding\nPreventive maintenance`}
+              />
+              <div className="mt-1 text-[11px] text-neutral-500">
+                Enter one skill per line. These will appear as bullet points on your public profile preview.
+              </div>
+            </Field>
+
+            <div className="rounded-2xl border border-neutral-800/80 bg-neutral-950/50 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="text-xs font-medium text-neutral-300">Qualifications</div>
+                  <div className="mt-1 text-xs text-neutral-500">
+                    Add qualifications here. Verification is handled by admin.
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-4 md:grid-cols-3">
+                <Field label="Qualification name *">
+                  <input
+                    value={qualificationName}
+                    onChange={(e) => setQualificationName(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
+                    placeholder="e.g. 18th Edition"
+                  />
+                </Field>
+
+                <Field label="Issuer">
+                  <input
+                    value={qualificationIssuer}
+                    onChange={(e) => setQualificationIssuer(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
+                    placeholder="e.g. City & Guilds"
+                  />
+                </Field>
+
+                <Field label="Credential ref">
+                  <input
+                    value={qualificationRef}
+                    onChange={(e) => setQualificationRef(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
+                    placeholder="e.g. 2382"
+                  />
+                </Field>
+              </div>
+
+              <div className="mt-4 flex justify-end">
+                <button
+                  type="button"
+                  onClick={addQualification}
+                  disabled={busy}
+                  className="rounded-xl border border-purple-500/70 bg-purple-700/30 px-4 py-2 text-xs font-medium text-purple-50 transition hover:border-purple-400 hover:bg-purple-600/40 disabled:opacity-60"
+                >
+                  {creatingQualification ? "Adding…" : "Add qualification"}
+                </button>
+              </div>
+
+              <div className="mt-5 space-y-3">
+                {qualifications.length === 0 ? (
+                  <div className="rounded-xl border border-neutral-800 bg-neutral-950/40 px-4 py-4 text-sm text-neutral-500">
+                    No qualifications added yet.
+                  </div>
+                ) : (
+                  qualifications.map((qualification) => (
+                    <div
+                      key={qualification.id}
+                      className="flex flex-col gap-3 rounded-xl border border-neutral-800 bg-neutral-950/40 px-4 py-4 md:flex-row md:items-start md:justify-between"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <div className="text-sm font-medium text-neutral-200">
+                            {qualification.name}
+                          </div>
+                          {qualification.is_verified ? (
+                            <VerifiedTick />
+                          ) : (
+                            <span className="inline-flex rounded-full border border-neutral-700 px-2 py-0.5 text-[10px] text-neutral-400">
+                              Unverified
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-1 text-xs text-neutral-500">
+                          {[qualification.issuer, qualification.credential_ref].filter(Boolean).join(" • ") || "No additional details"}
+                        </div>
+                      </div>
+
+                      <div className="shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => deleteQualification(qualification.id)}
+                          disabled={busy}
+                          className="rounded-xl border border-red-500/30 bg-red-950/20 px-3 py-2 text-xs text-red-200 transition hover:bg-red-900/30 disabled:opacity-60"
+                        >
+                          {deletingQualificationId === qualification.id ? "Removing…" : "Remove"}
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
 
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
