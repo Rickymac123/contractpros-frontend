@@ -35,6 +35,10 @@ export async function DELETE(
     },
   );
 
+  if (res.status === 204) {
+    return new NextResponse(null, { status: 204 });
+  }
+
   const text = await res.text();
   return new NextResponse(text || "", {
     status: res.status,
