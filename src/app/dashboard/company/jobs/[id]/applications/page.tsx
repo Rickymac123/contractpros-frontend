@@ -32,6 +32,9 @@ export default function CompanyJobApplicationsPage() {
   const [apps, setApps] = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [rejectingId, setRejectingId] = useState<number | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const title = useMemo(
@@ -99,6 +102,44 @@ export default function CompanyJobApplicationsPage() {
     load();
   }, [jobId]);
 
+  const updateApplicationStatus = async (
+    applicationId: number,
+    status: string,
+    notes?: string,
+  ) => {
+    try {
+      setUpdatingId(applicationId);
+      setError(null);
+
+      const res = await fetch(`/api/applications/${applicationId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          status,
+          ...(notes !== undefined ? { notes } : {}),
+        }),
+      });
+
+      const text = await res.text();
+
+      if (!res.ok) {
+        setError(`STATUS_${res.status}: ${text || "EMPTY"}`);
+        return;
+      }
+
+      setRejectingId(null);
+      setRejectReason("");
+      await load({ silent: true });
+    } catch (e: any) {
+      setError(typeof e?.message === "string" ? e.message : "FAILED_TO_UPDATE_STATUS");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   const backToJob = () => {
     if (!jobId) return router.push("/dashboard/company/jobs");
     router.push(`/dashboard/company/jobs/${jobId}`);
@@ -162,6 +203,9 @@ export default function CompanyJobApplicationsPage() {
               a.talent_industry?.trim() ? `Industry: ${a.talent_industry}` : null,
               showEngDiscipline ? `Discipline: ${a.talent_engineering_discipline}` : null,
             ].filter(Boolean) as string[];
+
+            const isUpdating = updatingId === a.application_id;
+            const status = (a.status || "unknown").toLowerCase();
 
             return (
               <div
@@ -233,6 +277,83 @@ export default function CompanyJobApplicationsPage() {
                         {a.notes?.trim() ? a.notes : "No notes provided."}
                       </p>
                     </div>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {status !== "shortlisted" && (
+                        <button
+                          type="button"
+                          disabled={isUpdating}
+                          onClick={() => updateApplicationStatus(a.application_id, "shortlisted")}
+                          className="rounded-lg border border-amber-500/40 bg-amber-950/30 px-3 py-1.5 text-[11px] font-medium text-amber-200 transition hover:bg-amber-900/40 disabled:opacity-60"
+                        >
+                          {isUpdating ? "Updating…" : "Shortlist"}
+                        </button>
+                      )}
+
+                      {status !== "accepted" && (
+                        <button
+                          type="button"
+                          disabled={isUpdating}
+                          onClick={() => updateApplicationStatus(a.application_id, "accepted")}
+                          className="rounded-lg border border-emerald-500/40 bg-emerald-950/30 px-3 py-1.5 text-[11px] font-medium text-emerald-200 transition hover:bg-emerald-900/40 disabled:opacity-60"
+                        >
+                          {isUpdating ? "Updating…" : "Accept"}
+                        </button>
+                      )}
+
+                      {status !== "rejected" && (
+                        <button
+                          type="button"
+                          disabled={isUpdating}
+                          onClick={() => {
+                            setRejectingId(a.application_id);
+                            setRejectReason("");
+                          }}
+                          className="rounded-lg border border-red-500/40 bg-red-950/30 px-3 py-1.5 text-[11px] font-medium text-red-200 transition hover:bg-red-900/40 disabled:opacity-60"
+                        >
+                          Reject
+                        </button>
+                      )}
+                    </div>
+
+                    {rejectingId === a.application_id && (
+                      <div className="mt-3 rounded-xl border border-red-500/30 bg-red-950/20 p-4">
+                        <div className="text-xs font-medium text-red-200">Reason for rejection</div>
+                        <textarea
+                          value={rejectReason}
+                          onChange={(e) => setRejectReason(e.target.value)}
+                          rows={4}
+                          className="mt-2 w-full rounded-xl border border-neutral-800 bg-neutral-950/70 px-3 py-2 text-sm text-white outline-none focus:border-red-400"
+                          placeholder="Enter the reason for rejection..."
+                        />
+                        <div className="mt-3 flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRejectingId(null);
+                              setRejectReason("");
+                            }}
+                            className="rounded-lg border border-neutral-700 bg-neutral-900/60 px-3 py-1.5 text-[11px] font-medium text-neutral-200 transition hover:bg-neutral-900"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isUpdating || !rejectReason.trim()}
+                            onClick={() =>
+                              updateApplicationStatus(
+                                a.application_id,
+                                "rejected",
+                                rejectReason.trim(),
+                              )
+                            }
+                            className="rounded-lg border border-red-500/40 bg-red-950/30 px-3 py-1.5 text-[11px] font-medium text-red-200 transition hover:bg-red-900/40 disabled:opacity-60"
+                          >
+                            {isUpdating ? "Updating…" : "Confirm rejection"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -265,11 +386,13 @@ function StatusPill({ status }: { status?: string | null }) {
   const cls =
     s === "pending"
       ? "border-purple-500/60 bg-purple-950/40 text-purple-100"
-      : s === "accepted"
-        ? "border-emerald-500/60 bg-emerald-950/40 text-emerald-100"
-        : s === "rejected"
-          ? "border-red-500/60 bg-red-950/40 text-red-100"
-          : "border-neutral-600/70 bg-neutral-900/70 text-neutral-100";
+      : s === "shortlisted"
+        ? "border-amber-500/60 bg-amber-950/40 text-amber-100"
+        : s === "accepted"
+          ? "border-emerald-500/60 bg-emerald-950/40 text-emerald-100"
+          : s === "rejected"
+            ? "border-red-500/60 bg-red-950/40 text-red-100"
+            : "border-neutral-600/70 bg-neutral-900/70 text-neutral-100";
 
   return (
     <span
