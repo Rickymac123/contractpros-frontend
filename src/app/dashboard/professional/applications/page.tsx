@@ -3,7 +3,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 
 type ProfessionalApplicationItem = {
   application_id: number;
@@ -48,20 +47,19 @@ function isValidStatusFilter(v: string): v is StatusFilter {
   return ["active", "all", "pending", "shortlisted", "accepted", "rejected"].includes(v);
 }
 
+function getInitialStatusFromUrl(): StatusFilter {
+  if (typeof window === "undefined") return "active";
+  const qp = new URLSearchParams(window.location.search).get("status");
+  return qp && isValidStatusFilter(qp) ? qp : "active";
+}
+
 export default function ProfessionalApplicationsPage() {
-  const searchParams = useSearchParams();
-
-  const initialStatus = (() => {
-    const qp = searchParams.get("status");
-    return qp && isValidStatusFilter(qp) ? qp : "active";
-  })();
-
   const [apps, setApps] = useState<ProfessionalApplicationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<StatusFilter>(initialStatus);
+  const [status, setStatus] = useState<StatusFilter>("active");
 
   const load = async () => {
     setLoading(true);
@@ -88,17 +86,9 @@ export default function ProfessionalApplicationsPage() {
   };
 
   useEffect(() => {
+    setStatus(getInitialStatusFromUrl());
     load();
   }, []);
-
-  useEffect(() => {
-    const qp = searchParams.get("status");
-    if (qp && isValidStatusFilter(qp)) {
-      setStatus(qp);
-    } else {
-      setStatus("active");
-    }
-  }, [searchParams]);
 
   const filtered = useMemo(() => {
     const q = norm(query);
