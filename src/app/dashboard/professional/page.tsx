@@ -5,7 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 type MyApplication = {
-  id: number;
+  id?: number;
+  application_id?: number;
   status?: string | null;
   jobpost_id?: number | null;
 };
@@ -46,22 +47,29 @@ export default function ProfessionalDashboardPage() {
   }, []);
 
   const counts = useMemo(() => {
-    const review = apps.filter(
+    const inReview = apps.filter(
       (a) => (a.status ?? "").toLowerCase() === "pending",
+    ).length;
+
+    const shortlisted = apps.filter(
+      (a) => (a.status ?? "").toLowerCase() === "shortlisted",
     ).length;
 
     const rejected = apps.filter(
       (a) => (a.status ?? "").toLowerCase() === "rejected",
     ).length;
 
+    const accepted = apps.filter(
+      (a) => (a.status ?? "").toLowerCase() === "accepted",
+    ).length;
+
     const upcomingBookings = 0;
 
-    return { review, rejected, upcomingBookings };
+    return { inReview, shortlisted, rejected, accepted, upcomingBookings };
   }, [apps]);
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -80,7 +88,6 @@ export default function ProfessionalDashboardPage() {
         </Link>
       </div>
 
-      {/* States */}
       {loading && (
         <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-6 py-10 text-center text-sm text-neutral-400">
           Loading…
@@ -95,14 +102,36 @@ export default function ProfessionalDashboardPage() {
 
       {!loading && !error && (
         <>
-          {/* Stats */}
-          <div className="grid gap-4 md:grid-cols-3">
-            <StatCard label="Applications in review" value={counts.review} />
-            <StatCard label="Applications rejected" value={counts.rejected} />
-            <StatCard label="Upcoming bookings" value={counts.upcomingBookings} />
+          <div className="grid gap-4 md:grid-cols-4">
+            <StatCard
+              label="Applications in review"
+              value={counts.inReview}
+              href="/dashboard/professional/applications?status=pending"
+            />
+            <StatCard
+              label="Applications shortlisted"
+              value={counts.shortlisted}
+              href="/dashboard/professional/applications?status=shortlisted"
+            />
+            <StatCard
+              label="Applications rejected"
+              value={counts.rejected}
+              href="/dashboard/professional/applications?status=rejected"
+            />
+            <StatCard
+              label="Applications accepted"
+              value={counts.accepted}
+              href="/dashboard/professional/applications?status=accepted"
+            />
           </div>
 
-          {/* Quick actions */}
+          <div className="grid gap-4 md:grid-cols-1">
+            <StatCard
+              label="Upcoming bookings"
+              value={counts.upcomingBookings}
+            />
+          </div>
+
           <div className="rounded-3xl border border-neutral-800/80 bg-neutral-950/60">
             <div className="border-b border-neutral-800/80 px-6 py-4">
               <h2 className="text-sm font-medium text-neutral-200">
@@ -118,7 +147,6 @@ export default function ProfessionalDashboardPage() {
                 Edit my profile
               </Link>
 
-              {/* NEW BUTTON INSERTED HERE */}
               <Link
                 href="/dashboard/professional/preview"
                 className="rounded-xl border border-neutral-800 bg-neutral-950/40 px-4 py-2 text-xs text-neutral-200 transition hover:bg-neutral-900"
@@ -131,6 +159,13 @@ export default function ProfessionalDashboardPage() {
                 className="rounded-xl border border-neutral-800 bg-neutral-950/40 px-4 py-2 text-xs text-neutral-200 transition hover:bg-neutral-900"
               >
                 View my applications
+              </Link>
+
+              <Link
+                href="/dashboard/professional/applications?status=shortlisted"
+                className="rounded-xl border border-amber-500/30 bg-amber-950/20 px-4 py-2 text-xs text-amber-200 transition hover:bg-amber-900/30"
+              >
+                View shortlisted jobs
               </Link>
 
               <Link
@@ -147,15 +182,40 @@ export default function ProfessionalDashboardPage() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-6 py-5">
+function StatCard({
+  label,
+  value,
+  href,
+}: {
+  label: string;
+  value: number;
+  href?: string;
+}) {
+  const content = (
+    <>
       <p className="text-xs uppercase tracking-wide text-neutral-400">
         {label}
       </p>
       <p className="mt-2 text-3xl font-semibold text-purple-300">
         {value}
       </p>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-6 py-5 transition hover:border-neutral-700 hover:bg-neutral-900/70"
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-6 py-5">
+      {content}
     </div>
   );
 }
