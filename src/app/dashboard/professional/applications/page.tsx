@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 type ProfessionalApplicationItem = {
   application_id: number;
@@ -22,6 +23,8 @@ type ProfessionalApplicationItem = {
   company_name?: string | null;
 };
 
+type StatusFilter = "active" | "all" | "pending" | "shortlisted" | "accepted" | "rejected";
+
 function norm(v: unknown) {
   return String(v ?? "").toLowerCase().trim();
 }
@@ -35,13 +38,24 @@ function fmtDate(v?: string | null) {
   }
 }
 
+function isValidStatusFilter(v: string): v is StatusFilter {
+  return ["active", "all", "pending", "shortlisted", "accepted", "rejected"].includes(v);
+}
+
 export default function ProfessionalApplicationsPage() {
+  const searchParams = useSearchParams();
+
+  const initialStatus = (() => {
+    const qp = searchParams.get("status");
+    return qp && isValidStatusFilter(qp) ? qp : "active";
+  })();
+
   const [apps, setApps] = useState<ProfessionalApplicationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<"active" | "all">("active");
+  const [status, setStatus] = useState<StatusFilter>(initialStatus);
 
   const load = async () => {
     setLoading(true);
@@ -71,24 +85,50 @@ export default function ProfessionalApplicationsPage() {
     load();
   }, []);
 
+  useEffect(() => {
+    const qp = searchParams.get("status");
+    if (qp && isValidStatusFilter(qp)) {
+      setStatus(qp);
+    } else {
+      setStatus("active");
+    }
+  }, [searchParams]);
+
   const filtered = useMemo(() => {
     const q = norm(query);
 
     return apps
       .filter((a) => {
-        if (status === "all") return true;
-        // "active" = everything that isn't a terminal status (tweak as you like)
         const s = norm(a.status);
-        return s !== "rejected" && s !== "withdrawn" && s !== "closed";
+
+        if (status === "all") return true;
+        if (status === "active") return s !== "rejected" && s !== "withdrawn" && s !== "closed";
+        return s === status;
       })
       .filter((a) => {
         if (!q) return true;
-        const hay = [a.job_title, a.job_location, a.job_profession, a.company_name, a.status]
+        const hay = [
+          a.job_title,
+          a.job_location,
+          a.job_profession,
+          a.company_name,
+          a.status,
+          a.notes,
+        ]
           .map(norm)
           .join(" ");
         return hay.includes(q);
       });
   }, [apps, query, status]);
+
+  const counts = useMemo(() => {
+    const pending = apps.filter((a) => norm(a.status) === "pending").length;
+    const shortlisted = apps.filter((a) => norm(a.status) === "shortlisted").length;
+    const accepted = apps.filter((a) => norm(a.status) === "accepted").length;
+    const rejected = apps.filter((a) => norm(a.status) === "rejected").length;
+
+    return { pending, shortlisted, accepted, rejected };
+  }, [apps]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 space-y-6">
@@ -123,7 +163,40 @@ export default function ProfessionalApplicationsPage() {
         </div>
       </header>
 
-      {/* Controls */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Link
+          href="/dashboard/professional/applications?status=pending"
+          className="rounded-2xl border border-neutral-800 bg-neutral-950/60 px-4 py-4 transition hover:bg-neutral-900/70"
+        >
+          <div className="text-xs uppercase tracking-wide text-neutral-400">In review</div>
+          <div className="mt-2 text-2xl font-semibold text-purple-300">{counts.pending}</div>
+        </Link>
+
+        <Link
+          href="/dashboard/professional/applications?status=shortlisted"
+          className="rounded-2xl border border-neutral-800 bg-neutral-950/60 px-4 py-4 transition hover:bg-neutral-900/70"
+        >
+          <div className="text-xs uppercase tracking-wide text-neutral-400">Shortlisted</div>
+          <div className="mt-2 text-2xl font-semibold text-amber-300">{counts.shortlisted}</div>
+        </Link>
+
+        <Link
+          href="/dashboard/professional/applications?status=accepted"
+          className="rounded-2xl border border-neutral-800 bg-neutral-950/60 px-4 py-4 transition hover:bg-neutral-900/70"
+        >
+          <div className="text-xs uppercase tracking-wide text-neutral-400">Accepted</div>
+          <div className="mt-2 text-2xl font-semibold text-emerald-300">{counts.accepted}</div>
+        </Link>
+
+        <Link
+          href="/dashboard/professional/applications?status=rejected"
+          className="rounded-2xl border border-neutral-800 bg-neutral-950/60 px-4 py-4 transition hover:bg-neutral-900/70"
+        >
+          <div className="text-xs uppercase tracking-wide text-neutral-400">Rejected</div>
+          <div className="mt-2 text-2xl font-semibold text-red-300">{counts.rejected}</div>
+        </Link>
+      </div>
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <input
           value={query}
@@ -135,11 +208,15 @@ export default function ProfessionalApplicationsPage() {
         <div className="flex items-center gap-2">
           <select
             value={status}
-            onChange={(e) => setStatus(e.target.value as any)}
+            onChange={(e) => setStatus(e.target.value as StatusFilter)}
             className="rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-neutral-200 outline-none focus:border-purple-500"
           >
             <option value="active">Active</option>
             <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="shortlisted">Shortlisted</option>
+            <option value="accepted">Accepted</option>
+            <option value="rejected">Rejected</option>
           </select>
         </div>
       </div>
@@ -174,9 +251,7 @@ export default function ProfessionalApplicationsPage() {
                         {a.job_title || `Job #${a.jobpost_id}`}
                       </div>
 
-                      <span className="rounded-full border border-neutral-700 bg-neutral-900 px-2 py-0.5 text-[11px] text-neutral-200">
-                        {a.status || "unknown"}
-                      </span>
+                      <StatusPill status={a.status} />
                     </div>
 
                     <div className="mt-1 flex flex-wrap gap-2 text-xs text-neutral-400">
@@ -188,9 +263,14 @@ export default function ProfessionalApplicationsPage() {
                     </div>
 
                     {a.notes && (
-                      <p className="mt-2 text-xs text-neutral-500 line-clamp-2">
-                        Notes: {a.notes}
-                      </p>
+                      <div className="mt-3 rounded-xl border border-neutral-800 bg-neutral-950/50 px-3 py-2">
+                        <div className="text-[11px] uppercase tracking-wide text-neutral-500">
+                          Update
+                        </div>
+                        <p className="mt-1 whitespace-pre-line text-xs text-neutral-300">
+                          {a.notes}
+                        </p>
+                      </div>
                     )}
                   </div>
 
@@ -205,11 +285,34 @@ export default function ProfessionalApplicationsPage() {
 
           {filtered.length === 0 && (
             <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-6 py-10 text-center text-sm text-neutral-400">
-              No applications yet.
+              No applications found for this filter.
             </div>
           )}
         </div>
       )}
     </div>
+  );
+}
+
+function StatusPill({ status }: { status?: string | null }) {
+  const s = norm(status || "unknown");
+
+  const cls =
+    s === "pending"
+      ? "border-purple-500/60 bg-purple-950/40 text-purple-100"
+      : s === "shortlisted"
+        ? "border-amber-500/60 bg-amber-950/40 text-amber-100"
+        : s === "accepted"
+          ? "border-emerald-500/60 bg-emerald-950/40 text-emerald-100"
+          : s === "rejected"
+            ? "border-red-500/60 bg-red-950/40 text-red-100"
+            : "border-neutral-600/70 bg-neutral-900/70 text-neutral-100";
+
+  return (
+    <span
+      className={`rounded-full border px-2 py-0.5 text-[11px] ${cls}`}
+    >
+      {s}
+    </span>
   );
 }
