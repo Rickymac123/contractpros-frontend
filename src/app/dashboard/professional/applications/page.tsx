@@ -23,7 +23,13 @@ type ProfessionalApplicationItem = {
   company_name?: string | null;
 };
 
-type StatusFilter = "active" | "all" | "pending" | "shortlisted" | "accepted" | "rejected";
+type StatusFilter =
+  | "active"
+  | "all"
+  | "pending"
+  | "shortlisted"
+  | "accepted"
+  | "rejected";
 
 function norm(v: unknown) {
   return String(v ?? "").toLowerCase().trim();
@@ -308,11 +314,5 @@ function StatusPill({ status }: { status?: string | null }) {
             ? "border-red-500/60 bg-red-950/40 text-red-100"
             : "border-neutral-600/70 bg-neutral-900/70 text-neutral-100";
 
-  return (
-    <span
-      className={`rounded-full border px-2 py-0.5 text-[11px] ${cls}`}
-    >
-      {s}
-    </span>
-  );
+  return <span className={`rounded-full border px-2 py-0.5 text-[11px] ${cls}`}>{s}</span>;
 }
