@@ -11,8 +11,14 @@ type MyApplication = {
   jobpost_id?: number | null;
 };
 
+type BookingRequestItem = {
+  id: number;
+  status?: string | null;
+};
+
 export default function ProfessionalDashboardPage() {
   const [apps, setApps] = useState<MyApplication[]>([]);
+  const [bookingRequests, setBookingRequests] = useState<BookingRequestItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,22 +28,39 @@ export default function ProfessionalDashboardPage() {
         setLoading(true);
         setError(null);
 
-        const res = await fetch("/api/professional/applications", {
-          cache: "no-store",
-        });
+        const [appsRes, requestsRes] = await Promise.all([
+          fetch("/api/professional/applications", { cache: "no-store" }),
+          fetch("/api/professional/booking-requests", { cache: "no-store" }),
+        ]);
 
-        const text = await res.text();
-        if (!res.ok) {
-          setError(`STATUS ${res.status}: ${text || "EMPTY"}`);
+        const [appsText, requestsText] = await Promise.all([
+          appsRes.text(),
+          requestsRes.text(),
+        ]);
+
+        if (!appsRes.ok) {
+          setError(`APPLICATIONS STATUS ${appsRes.status}: ${appsText || "EMPTY"}`);
           setApps([]);
+          setBookingRequests([]);
           return;
         }
 
-        const data = text ? JSON.parse(text) : [];
-        setApps(Array.isArray(data) ? data : []);
+        if (!requestsRes.ok) {
+          setError(`BOOKING REQUESTS STATUS ${requestsRes.status}: ${requestsText || "EMPTY"}`);
+          setApps([]);
+          setBookingRequests([]);
+          return;
+        }
+
+        const appsData = appsText ? JSON.parse(appsText) : [];
+        const requestsData = requestsText ? JSON.parse(requestsText) : [];
+
+        setApps(Array.isArray(appsData) ? appsData : []);
+        setBookingRequests(Array.isArray(requestsData) ? requestsData : []);
       } catch (e: any) {
         setError(typeof e?.message === "string" ? e.message : "Failed to load");
         setApps([]);
+        setBookingRequests([]);
       } finally {
         setLoading(false);
       }
@@ -63,10 +86,21 @@ export default function ProfessionalDashboardPage() {
       (a) => (a.status ?? "").toLowerCase() === "accepted",
     ).length;
 
+    const pendingBookingRequests = bookingRequests.filter(
+      (r) => (r.status ?? "").toLowerCase() === "pending",
+    ).length;
+
     const upcomingBookings = 0;
 
-    return { inReview, shortlisted, rejected, accepted, upcomingBookings };
-  }, [apps]);
+    return {
+      inReview,
+      shortlisted,
+      rejected,
+      accepted,
+      pendingBookingRequests,
+      upcomingBookings,
+    };
+  }, [apps, bookingRequests]);
 
   return (
     <div className="space-y-6">
@@ -76,7 +110,7 @@ export default function ProfessionalDashboardPage() {
             Professional dashboard
           </h1>
           <p className="mt-1 text-sm text-neutral-400">
-            Overview of your applications and bookings.
+            Overview of your applications, booking requests and bookings.
           </p>
         </div>
 
@@ -102,7 +136,7 @@ export default function ProfessionalDashboardPage() {
 
       {!loading && !error && (
         <>
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-5">
             <StatCard
               label="Applications in review"
               value={counts.inReview}
@@ -122,6 +156,11 @@ export default function ProfessionalDashboardPage() {
               label="Applications accepted"
               value={counts.accepted}
               href="/dashboard/professional/applications?status=accepted"
+            />
+            <StatCard
+              label="Booking requests"
+              value={counts.pendingBookingRequests}
+              href="/dashboard/professional/booking-requests"
             />
           </div>
 
@@ -166,6 +205,20 @@ export default function ProfessionalDashboardPage() {
                 className="rounded-xl border border-amber-500/30 bg-amber-950/20 px-4 py-2 text-xs text-amber-200 transition hover:bg-amber-900/30"
               >
                 View shortlisted jobs
+              </Link>
+
+              <Link
+                href="/dashboard/professional/booking-requests"
+                className="rounded-xl border border-purple-500/30 bg-purple-950/20 px-4 py-2 text-xs text-purple-200 transition hover:bg-purple-900/30"
+              >
+                <span className="inline-flex items-center gap-2">
+                  <span>Booking requests</span>
+                  {counts.pendingBookingRequests > 0 && (
+                    <span className="rounded-full bg-purple-600/30 px-2 py-0.5 text-[10px] text-purple-100">
+                      {counts.pendingBookingRequests} pending
+                    </span>
+                  )}
+                </span>
               </Link>
 
               <Link

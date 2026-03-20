@@ -175,6 +175,21 @@ export default function CompanyApplicationProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [showRequestForm, setShowRequestForm] = useState(false);
+  const [submittingRequest, setSubmittingRequest] = useState(false);
+  const [requestInfo, setRequestInfo] = useState<string | null>(null);
+  const [requestError, setRequestError] = useState<string | null>(null);
+
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [siteName, setSiteName] = useState("");
+  const [siteAddress, setSiteAddress] = useState("");
+  const [contactName, setContactName] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [requestNotes, setRequestNotes] = useState("");
+
   const load = async () => {
     try {
       setLoading(true);
@@ -241,6 +256,73 @@ export default function CompanyApplicationProfilePage() {
     profile.hourly_rate != null ? `Hour: ${fmtMoney(profile.hourly_rate)}` : null,
   ].filter(Boolean);
 
+  const submitBookingRequest = async () => {
+    try {
+      setSubmittingRequest(true);
+      setRequestInfo(null);
+      setRequestError(null);
+
+      if (
+        !profile.id ||
+        !startDate ||
+        !endDate ||
+        !startTime ||
+        !endTime ||
+        !siteName.trim() ||
+        !siteAddress.trim() ||
+        !contactName.trim() ||
+        !contactPhone.trim()
+      ) {
+        setRequestError("ALL_BOOKING_REQUEST_FIELDS_ARE_REQUIRED");
+        return;
+      }
+
+      const res = await fetch("/api/company/booking-requests", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          talent_id: profile.id,
+          application_id: Number(applicationId),
+          start_date: startDate,
+          end_date: endDate,
+          start_time: startTime,
+          end_time: endTime,
+          site_name: siteName.trim(),
+          site_address: siteAddress.trim(),
+          contact_name: contactName.trim(),
+          contact_phone: contactPhone.trim(),
+          notes: requestNotes.trim() || null,
+        }),
+      });
+
+      const text = await res.text();
+
+      if (!res.ok) {
+        setRequestError(extractDetail(text, res.status));
+        return;
+      }
+
+      setRequestInfo("BOOKING_REQUEST_SENT");
+      setShowRequestForm(false);
+      setStartDate("");
+      setEndDate("");
+      setStartTime("");
+      setEndTime("");
+      setSiteName("");
+      setSiteAddress("");
+      setContactName("");
+      setContactPhone("");
+      setRequestNotes("");
+    } catch (e: any) {
+      setRequestError(e?.message || "FAILED_TO_CREATE_BOOKING_REQUEST");
+    } finally {
+      setSubmittingRequest(false);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 space-y-6">
       <header className="flex flex-wrap items-start justify-between gap-3">
@@ -261,6 +343,18 @@ export default function CompanyApplicationProfilePage() {
             Refresh
           </button>
 
+          <button
+            type="button"
+            onClick={() => {
+              setShowRequestForm((v) => !v);
+              setRequestInfo(null);
+              setRequestError(null);
+            }}
+            className="rounded-xl border border-purple-500/70 bg-purple-700/30 px-4 py-2 text-xs font-medium text-purple-50 transition hover:border-purple-400 hover:bg-purple-600/40"
+          >
+            {showRequestForm ? "Close request form" : "Request to book"}
+          </button>
+
           <Link
             href=".."
             className="rounded-xl border border-neutral-800 bg-neutral-950/50 px-4 py-2 text-xs text-neutral-200 transition hover:bg-neutral-900"
@@ -269,6 +363,135 @@ export default function CompanyApplicationProfilePage() {
           </Link>
         </div>
       </header>
+
+      {requestInfo && (
+        <div className="rounded-2xl border border-emerald-500/40 bg-emerald-950/20 px-4 py-3 text-sm text-emerald-200">
+          {requestInfo}
+        </div>
+      )}
+
+      {showRequestForm && (
+        <div className="rounded-3xl border border-purple-500/20 bg-neutral-950/60 shadow-[0_0_40px_rgba(0,0,0,0.55)] overflow-hidden">
+          <div className="border-b border-neutral-800/80 px-6 py-4">
+            <h2 className="text-sm font-medium text-neutral-200">Request to book</h2>
+          </div>
+
+          <div className="p-6 space-y-4">
+            {requestError && (
+              <div className="rounded-2xl border border-red-500/40 bg-red-950/30 px-4 py-3 text-sm text-red-200 whitespace-pre-wrap">
+                {requestError}
+              </div>
+            )}
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="Start date *">
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
+                />
+              </Field>
+
+              <Field label="End date *">
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
+                />
+              </Field>
+
+              <Field label="Start time *">
+                <input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
+                />
+              </Field>
+
+              <Field label="End time *">
+                <input
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
+                />
+              </Field>
+
+              <Field label="Site name *">
+                <input
+                  value={siteName}
+                  onChange={(e) => setSiteName(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
+                  placeholder="e.g. Main production site"
+                />
+              </Field>
+
+              <Field label="Contact name *">
+                <input
+                  value={contactName}
+                  onChange={(e) => setContactName(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
+                  placeholder="e.g. John Smith"
+                />
+              </Field>
+            </div>
+
+            <Field label="Site address *">
+              <textarea
+                value={siteAddress}
+                onChange={(e) => setSiteAddress(e.target.value)}
+                rows={3}
+                className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
+                placeholder="Full site address"
+              />
+            </Field>
+
+            <Field label="Contact phone *">
+              <input
+                value={contactPhone}
+                onChange={(e) => setContactPhone(e.target.value)}
+                className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
+                placeholder="e.g. 07700 900123"
+              />
+            </Field>
+
+            <Field label="Additional information">
+              <textarea
+                value={requestNotes}
+                onChange={(e) => setRequestNotes(e.target.value)}
+                rows={4}
+                className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
+                placeholder="Shift details, arrival instructions, scope, PPE requirements, parking, etc."
+              />
+            </Field>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowRequestForm(false);
+                  setRequestError(null);
+                }}
+                className="rounded-xl border border-neutral-800 bg-neutral-950/50 px-4 py-2 text-xs text-neutral-200 transition hover:bg-neutral-900"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={submittingRequest}
+                onClick={submitBookingRequest}
+                className="rounded-xl border border-purple-500/70 bg-purple-700/30 px-4 py-2 text-xs font-medium text-purple-50 transition hover:border-purple-400 hover:bg-purple-600/40 disabled:opacity-60"
+              >
+                {submittingRequest ? "Sending..." : "Send booking request"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {loading && (
         <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-6 py-10 text-center text-sm text-neutral-400">
@@ -461,6 +684,15 @@ export default function CompanyApplicationProfilePage() {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="text-xs font-medium text-neutral-300">{label}</div>
+      {children}
     </div>
   );
 }
