@@ -11,6 +11,31 @@ function getBackendAuthCookie(req: NextRequest) {
   return `enginuity_auth=${decoded}`;
 }
 
+export async function GET(req: NextRequest) {
+  const cookiePair = getBackendAuthCookie(req);
+  if (!cookiePair) {
+    return NextResponse.json({ detail: "UNAUTHENTICATED" }, { status: 401 });
+  }
+
+  const res = await fetch(`${API_BASE_URL}/company/booking-requests`, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      Cookie: cookiePair,
+    },
+    cache: "no-store",
+  });
+
+  const text = await res.text();
+
+  return new NextResponse(text || "", {
+    status: res.status,
+    headers: {
+      "Content-Type": res.headers.get("content-type") ?? "application/json",
+    },
+  });
+}
+
 export async function POST(req: NextRequest) {
   const cookiePair = getBackendAuthCookie(req);
   if (!cookiePair) {
