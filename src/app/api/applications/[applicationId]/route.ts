@@ -13,7 +13,7 @@ function getBackendAuthCookie(req: NextRequest) {
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { applicationId: string } },
+  { params }: { params: Promise<{ applicationId: string }> },
 ) {
   try {
     const cookiePair = getBackendAuthCookie(req);
@@ -21,7 +21,7 @@ export async function PATCH(
       return NextResponse.json({ detail: "UNAUTHENTICATED" }, { status: 401 });
     }
 
-    const { applicationId } = params;
+    const { applicationId } = await params;
     const body = await req.text();
 
     const res = await fetch(`${API_BASE_URL}/applications/${applicationId}`, {
