@@ -24,7 +24,16 @@ export async function PATCH(
     const { applicationId } = await params;
     const body = await req.text();
 
-    const res = await fetch(`${API_BASE_URL}/applications/${applicationId}`, {
+    if (!API_BASE_URL) {
+      return new NextResponse("API_BASE_URL_MISSING", {
+        status: 500,
+        headers: { "Content-Type": "text/plain; charset=utf-8" },
+      });
+    }
+
+    const backendUrl = `${API_BASE_URL}/applications/${applicationId}`;
+
+    const res = await fetch(backendUrl, {
       method: "PATCH",
       headers: {
         Accept: "application/json",
@@ -44,14 +53,16 @@ export async function PATCH(
       },
     });
   } catch (error) {
-    return new NextResponse(
-      error instanceof Error ? error.message : "FAILED_TO_PROXY_APPLICATION_PATCH",
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "text/plain; charset=utf-8",
-        },
+    const message =
+      error instanceof Error
+        ? `${error.name}: ${error.message}`
+        : "FAILED_TO_PROXY_APPLICATION_PATCH";
+
+    return new NextResponse(message, {
+      status: 500,
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
       },
-    );
+    });
   }
 }
