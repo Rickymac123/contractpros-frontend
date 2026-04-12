@@ -327,18 +327,18 @@ export default function CompanyJobDetailPage() {
         </div>
 
         {!loading && !error && job && (
-          <div className="space-y-6 px-6 py-6">
+          <div className="space-y-4 px-6 py-6">
             {isArchived && (
               <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-4 py-3 text-sm text-neutral-200">
                 This job is archived. Editing and sourcing actions are disabled until you restore it.
               </div>
             )}
 
-            <Section title="Role overview">
+            <CollapsibleSection title="Role overview" defaultOpen>
               <TextBlock value={job.description} empty="No description provided." />
-            </Section>
+            </CollapsibleSection>
 
-            <Section title="Classification">
+            <CollapsibleSection title="Classification" defaultOpen>
               <DetailGrid
                 items={[
                   ["Profession category", job.profession_category],
@@ -349,9 +349,9 @@ export default function CompanyJobDetailPage() {
                   ["Contract type", job.contract_type],
                 ]}
               />
-            </Section>
+            </CollapsibleSection>
 
-            <Section title="Location & site">
+            <CollapsibleSection title="Location & site" defaultOpen>
               <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
                 <div className="grid gap-4 md:grid-cols-2">
                   <FieldBlock label="Location" value={job.location} />
@@ -365,9 +365,9 @@ export default function CompanyJobDetailPage() {
 
                 <FieldBlock label="Site address" value={job.site_address} multiline />
               </div>
-            </Section>
+            </CollapsibleSection>
 
-            <Section title="Schedule">
+            <CollapsibleSection title="Schedule">
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                 <FieldBlock label="Start date" value={formatDate(job.start_date)} />
                 <FieldBlock label="End date" value={formatDate(job.end_date)} />
@@ -375,9 +375,9 @@ export default function CompanyJobDetailPage() {
                 <FieldBlock label="End time" value={formatTime(job.end_time)} />
                 <FieldBlock label="Shift pattern" value={job.shift_pattern} />
               </div>
-            </Section>
+            </CollapsibleSection>
 
-            <Section title="Commercials">
+            <CollapsibleSection title="Commercials">
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <FieldBlock label="Rate type" value={job.rate_type} />
                 <FieldBlock
@@ -390,9 +390,9 @@ export default function CompanyJobDetailPage() {
                 />
                 <FieldBlock label="IR35" value={job.ir35_type} />
               </div>
-            </Section>
+            </CollapsibleSection>
 
-            <Section title="Requirements">
+            <CollapsibleSection title="Requirements">
               <div className="grid gap-4 lg:grid-cols-3">
                 <FieldBlock label="Required skills" value={job.required_skills} multiline />
                 <FieldBlock label="Preferred skills" value={job.preferred_skills} multiline />
@@ -402,18 +402,18 @@ export default function CompanyJobDetailPage() {
                   multiline
                 />
               </div>
-            </Section>
+            </CollapsibleSection>
 
-            <Section title="Job flags">
+            <CollapsibleSection title="Job flags">
               <div className="flex flex-wrap gap-2">
                 <FlagPill label="Urgent" active={!!job.is_urgent} />
                 <FlagPill label="Requires travel" active={!!job.requires_travel} />
                 <FlagPill label="Requires vehicle" active={!!job.requires_vehicle} />
                 <FlagPill label="Requires own tools" active={!!job.requires_own_tools} />
               </div>
-            </Section>
+            </CollapsibleSection>
 
-            <Section title="Sourcing options">
+            <CollapsibleSection title="Sourcing options" defaultOpen>
               <p className="text-sm text-neutral-400">
                 Search matching professionals first, or review applications already received for this job.
               </p>
@@ -433,7 +433,7 @@ export default function CompanyJobDetailPage() {
                   View applications
                 </Link>
               </div>
-            </Section>
+            </CollapsibleSection>
 
             <div className="border-t border-neutral-800 pt-4">
               <button
@@ -451,19 +451,29 @@ export default function CompanyJobDetailPage() {
   );
 }
 
-function Section({
+function CollapsibleSection({
   title,
   children,
+  defaultOpen = false,
 }: {
   title: string;
   children: React.ReactNode;
+  defaultOpen?: boolean;
 }) {
+  const [open, setOpen] = useState(defaultOpen);
+
   return (
-    <section className="rounded-2xl border border-neutral-800/80 bg-neutral-950/50 p-5">
-      <div className="flex items-center justify-between gap-3">
+    <section className="overflow-hidden rounded-2xl border border-neutral-800/80 bg-neutral-950/50">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition hover:bg-neutral-900/30"
+      >
         <h3 className="text-sm font-semibold text-white">{title}</h3>
-      </div>
-      <div className="mt-4">{children}</div>
+        <span className="text-xs text-neutral-400">{open ? "−" : "+"}</span>
+      </button>
+
+      {open && <div className="border-t border-neutral-800/70 px-5 py-4">{children}</div>}
     </section>
   );
 }
