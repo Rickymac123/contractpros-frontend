@@ -179,7 +179,7 @@ export default function CompanyJobDetailPage() {
             Company job
           </p>
           <p className="mt-1 text-xs text-neutral-400">
-            ContractPro's – Contract & Interim Talent
+            ContractPro&apos;s – Contract & Interim Talent
           </p>
         </div>
 
@@ -205,32 +205,105 @@ export default function CompanyJobDetailPage() {
 
           {!loading && !error && job && (
             <>
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <h2 className="text-xl font-semibold text-white">{job.title}</h2>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-xl font-semibold text-white">{job.title}</h2>
+
+                    {!isArchived ? (
+                      <span className="inline-flex items-center gap-2 rounded-full border border-purple-500/60 bg-purple-950/40 px-3 py-1 text-xs font-medium text-purple-100">
+                        <span className="h-1.5 w-1.5 rounded-full bg-purple-300" />
+                        Active
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-2 rounded-full border border-neutral-600/70 bg-neutral-900/70 px-3 py-1 text-xs font-medium text-neutral-100">
+                        <span className="h-1.5 w-1.5 rounded-full bg-neutral-300" />
+                        Archived
+                      </span>
+                    )}
+                  </div>
+
                   <p className="mt-1 text-sm text-neutral-400">
                     {job.profession || "Unspecified profession"} ·{" "}
                     {job.location || "Location not set"}
                   </p>
+
+                  <p className="mt-2 text-xs text-neutral-500">
+                    Job ID: <span className="font-mono text-neutral-200">#{job.id}</span>
+                  </p>
                 </div>
 
-                <div className="flex flex-col items-start gap-2 md:items-end">
-                  {!isArchived ? (
-                    <span className="inline-flex items-center gap-2 rounded-full border border-purple-500/60 bg-purple-950/40 px-3 py-1 text-xs font-medium text-purple-100">
-                      <span className="h-1.5 w-1.5 rounded-full bg-purple-300" />
-                      Active
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-2 rounded-full border border-neutral-600/70 bg-neutral-900/70 px-3 py-1 text-xs font-medium text-neutral-100">
-                      <span className="h-1.5 w-1.5 rounded-full bg-neutral-300" />
-                      Archived
-                    </span>
-                  )}
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={handleEdit}
+                    disabled={!jobId || isArchived}
+                    className="rounded-xl border border-purple-500/70 bg-purple-700/30 px-4 py-2 text-xs font-medium text-purple-50 transition hover:border-purple-400 hover:bg-purple-600/40 disabled:cursor-not-allowed disabled:border-neutral-700 disabled:bg-neutral-900 disabled:text-neutral-500"
+                  >
+                    Edit job
+                  </button>
 
-                  <p className="text-xs text-neutral-400">
-                    Job ID:{" "}
-                    <span className="font-mono text-neutral-200">#{job.id}</span>
-                  </p>
+                  {!isArchived ? (
+                    !confirmArchive ? (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmArchive(true)}
+                        disabled={isArchiving || !jobId}
+                        className="rounded-xl border border-red-500/70 bg-red-900/40 px-4 py-2 text-xs font-medium text-red-50 transition hover:border-red-400 hover:bg-red-800/60 disabled:cursor-not-allowed disabled:border-neutral-700 disabled:bg-neutral-900 disabled:text-neutral-500"
+                      >
+                        Archive job
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={handleArchive}
+                          disabled={isArchiving}
+                          className="rounded-xl border border-red-400/80 bg-red-800/60 px-4 py-2 text-xs font-medium text-red-50 transition hover:bg-red-700/70 disabled:cursor-not-allowed disabled:border-neutral-700 disabled:bg-neutral-900 disabled:text-neutral-500"
+                        >
+                          {isArchiving ? "Archiving…" : "Confirm archive"}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setConfirmArchive(false)}
+                          disabled={isArchiving}
+                          className="rounded-xl border border-neutral-700 bg-neutral-900/70 px-4 py-2 text-xs font-medium text-neutral-200 transition hover:border-neutral-500 hover:bg-neutral-800 disabled:opacity-60"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    )
+                  ) : !confirmRestore ? (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmRestore(true)}
+                      disabled={isRestoring || !jobId}
+                      className="rounded-xl border border-purple-500/70 bg-purple-700/30 px-4 py-2 text-xs font-medium text-purple-50 transition hover:border-purple-400 hover:bg-purple-600/40 disabled:opacity-60"
+                    >
+                      Restore job
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleRestore}
+                        disabled={isRestoring}
+                        className="rounded-xl border border-purple-400/80 bg-purple-700/50 px-4 py-2 text-xs font-medium text-purple-50 transition hover:bg-purple-700/60 disabled:opacity-60"
+                      >
+                        {isRestoring ? "Restoring…" : "Confirm restore"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setConfirmRestore(false)}
+                        disabled={isRestoring}
+                        className="rounded-xl border border-neutral-700 bg-neutral-900/70 px-4 py-2 text-xs font-medium text-neutral-200 transition hover:border-neutral-500 hover:bg-neutral-800 disabled:opacity-60"
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -306,87 +379,7 @@ export default function CompanyJobDetailPage() {
                 </div>
               </div>
 
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-3 border-t border-neutral-800 pt-4">
-                <div className="flex flex-wrap gap-2">
-                  <Link
-                    href={`/dashboard/company/jobs/${job.id}/applications`}
-                    className="rounded-xl border border-neutral-800 bg-neutral-950/70 px-4 py-2 text-xs font-medium text-neutral-200 transition hover:bg-neutral-900"
-                  >
-                    View applications →
-                  </Link>
-
-                  <button
-                    type="button"
-                    onClick={handleEdit}
-                    disabled={!jobId || isArchived}
-                    className="rounded-xl border border-purple-500/70 bg-purple-700/30 px-4 py-2 text-xs font-medium text-purple-50 transition hover:border-purple-400 hover:bg-purple-600/40 disabled:cursor-not-allowed disabled:border-neutral-700 disabled:bg-neutral-900 disabled:text-neutral-500"
-                  >
-                    Edit
-                  </button>
-
-                  {!isArchived ? (
-                    !confirmArchive ? (
-                      <button
-                        type="button"
-                        onClick={() => setConfirmArchive(true)}
-                        disabled={isArchiving || !jobId}
-                        className="rounded-xl border border-red-500/70 bg-red-900/40 px-4 py-2 text-xs font-medium text-red-50 transition hover:border-red-400 hover:bg-red-800/60 disabled:cursor-not-allowed disabled:border-neutral-700 disabled:bg-neutral-900 disabled:text-neutral-500"
-                      >
-                        Archive
-                      </button>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          onClick={handleArchive}
-                          disabled={isArchiving}
-                          className="rounded-xl border border-red-400/80 bg-red-800/60 px-4 py-2 text-xs font-medium text-red-50 transition hover:bg-red-700/70 disabled:cursor-not-allowed disabled:border-neutral-700 disabled:bg-neutral-900 disabled:text-neutral-500"
-                        >
-                          {isArchiving ? "Archiving…" : "Confirm archive"}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setConfirmArchive(false)}
-                          disabled={isArchiving}
-                          className="rounded-xl border border-neutral-700 bg-neutral-900/70 px-4 py-2 text-xs font-medium text-neutral-200 transition hover:border-neutral-500 hover:bg-neutral-800 disabled:opacity-60"
-                        >
-                          Cancel
-                        </button>
-                      </>
-                    )
-                  ) : !confirmRestore ? (
-                    <button
-                      type="button"
-                      onClick={() => setConfirmRestore(true)}
-                      disabled={isRestoring || !jobId}
-                      className="rounded-xl border border-purple-500/70 bg-purple-700/30 px-4 py-2 text-xs font-medium text-purple-50 transition hover:border-purple-400 hover:bg-purple-600/40 disabled:opacity-60"
-                    >
-                      Restore
-                    </button>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        onClick={handleRestore}
-                        disabled={isRestoring}
-                        className="rounded-xl border border-purple-400/80 bg-purple-700/50 px-4 py-2 text-xs font-medium text-purple-50 transition hover:bg-purple-700/60 disabled:opacity-60"
-                      >
-                        {isRestoring ? "Restoring…" : "Confirm restore"}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setConfirmRestore(false)}
-                        disabled={isRestoring}
-                        className="rounded-xl border border-neutral-700 bg-neutral-900/70 px-4 py-2 text-xs font-medium text-neutral-200 transition hover:border-neutral-500 hover:bg-neutral-800 disabled:opacity-60"
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  )}
-                </div>
-
+              <div className="mt-2 flex justify-between gap-3 border-t border-neutral-800 pt-4">
                 <button
                   type="button"
                   onClick={handleBack}
