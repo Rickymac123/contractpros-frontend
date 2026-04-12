@@ -31,7 +31,9 @@ export async function GET(
 
     const { talentId } = await params;
 
-    const res = await fetch(`${API_BASE_URL}/company/talent/${talentId}/profile`, {
+    const backendUrl = `${API_BASE_URL}/company/talent/${talentId}/profile`;
+
+    const res = await fetch(backendUrl, {
       method: "GET",
       headers: {
         Accept: "application/json",
@@ -49,14 +51,16 @@ export async function GET(
       },
     });
   } catch (error) {
-    return new NextResponse(
-      error instanceof Error ? `${error.name}: ${error.message}` : "FAILED_TO_LOAD_TALENT_PROFILE",
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "text/plain; charset=utf-8",
-        },
+    const message =
+      error instanceof Error
+        ? `${error.name}: ${error.message}`
+        : "FAILED_TO_LOAD_TALENT_PROFILE";
+
+    return new NextResponse(message, {
+      status: 500,
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
       },
-    );
+    });
   }
 }
