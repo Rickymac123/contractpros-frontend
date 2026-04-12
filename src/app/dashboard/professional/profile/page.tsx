@@ -8,21 +8,16 @@ type TalentProfile = {
   first_name?: string | null;
   last_name?: string | null;
 
+  profession_category?: string | null;
   profession?: string | null;
+  engineering_discipline?: string | null;
+  industry?: string | null;
+
   location?: string | null;
   postcode?: string | null;
-
   work_radius_miles?: number | null;
 
   ir35_preference?: "inside" | "outside" | "either" | string | null;
-  engineering_discipline?:
-    | "mechanical"
-    | "electrical"
-    | "multiskilled"
-    | "other"
-    | string
-    | null;
-  industry?: string | null;
 
   rate_type?: "day" | "hour" | string | null;
   day_rate?: number | null;
@@ -33,6 +28,11 @@ type TalentProfile = {
 
   bio?: string | null;
   skills?: string | null;
+  experience_level?: string | null;
+
+  willing_to_travel?: boolean | null;
+  has_vehicle?: boolean | null;
+  has_tools?: boolean | null;
 };
 
 type Qualification = {
@@ -52,7 +52,6 @@ function extractDetail(text: string, status: number) {
   try {
     const parsed = JSON.parse(text);
     if (parsed && typeof parsed === "object" && "detail" in parsed) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const d = (parsed as any).detail;
       return typeof d === "string" ? d : JSON.stringify(d);
     }
@@ -60,29 +59,51 @@ function extractDetail(text: string, status: number) {
   return `STATUS ${status}: ${text}`;
 }
 
+const PROFESSION_CATEGORY_OPTIONS = [
+  { value: "Engineering", label: "Engineering" },
+  { value: "Maintenance", label: "Maintenance" },
+  { value: "Health & Safety", label: "Health & Safety" },
+  { value: "Operations", label: "Operations" },
+  { value: "Projects", label: "Projects" },
+];
+
 const PROFESSION_OPTIONS = [
-  { value: "engineering", label: "Engineering" },
-  { value: "operations", label: "Operations" },
-  { value: "quality", label: "Quality" },
-  { value: "technical", label: "Technical" },
-  { value: "maintenance", label: "Maintenance" },
-  { value: "project_management", label: "Project Management" },
-  { value: "hse", label: "HSE" },
-  { value: "supply_chain", label: "Supply Chain" },
-  { value: "other", label: "Other" },
+  { value: "Engineer", label: "Engineer" },
+  { value: "Technician", label: "Technician" },
+  { value: "Manager", label: "Manager" },
+  { value: "Supervisor", label: "Supervisor" },
+  { value: "Consultant", label: "Consultant" },
+];
+
+const ENGINEERING_DISCIPLINE_OPTIONS = [
+  { value: "Electrical", label: "Electrical" },
+  { value: "Mechanical", label: "Mechanical" },
+  { value: "Automation", label: "Automation" },
+  { value: "Controls", label: "Controls" },
+  { value: "Multi-skilled", label: "Multi-skilled" },
+  { value: "Reliability", label: "Reliability" },
+  { value: "Projects", label: "Projects" },
 ];
 
 const INDUSTRY_OPTIONS = [
-  { value: "food", label: "Food" },
-  { value: "fmcg", label: "FMCG" },
-  { value: "pharma", label: "Pharma" },
-  { value: "medical_devices", label: "Medical Devices" },
-  { value: "automotive", label: "Automotive" },
-  { value: "aerospace", label: "Aerospace" },
-  { value: "packaging", label: "Packaging" },
-  { value: "chemicals", label: "Chemicals" },
-  { value: "energy_utilities", label: "Energy & Utilities" },
-  { value: "other", label: "Other" },
+  { value: "Food Manufacturing", label: "Food Manufacturing" },
+  { value: "FMCG", label: "FMCG" },
+  { value: "Pharma", label: "Pharma" },
+  { value: "Medical Devices", label: "Medical Devices" },
+  { value: "Automotive", label: "Automotive" },
+  { value: "Aerospace", label: "Aerospace" },
+  { value: "Packaging", label: "Packaging" },
+  { value: "Chemicals", label: "Chemicals" },
+  { value: "Energy & Utilities", label: "Energy & Utilities" },
+  { value: "Other", label: "Other" },
+];
+
+const EXPERIENCE_LEVEL_OPTIONS = [
+  { value: "Junior", label: "Junior" },
+  { value: "Mid-level", label: "Mid-level" },
+  { value: "Senior", label: "Senior" },
+  { value: "Lead", label: "Lead" },
+  { value: "Manager", label: "Manager" },
 ];
 
 function labelFor(
@@ -99,49 +120,53 @@ function isFilled(v: unknown) {
   if (v == null) return false;
   if (typeof v === "string") return v.trim().length > 0;
   if (typeof v === "number") return !Number.isNaN(v);
+  if (typeof v === "boolean") return true;
   return true;
 }
 
 function computeProfessionalCompleteness(p: {
   first_name?: string | null;
   last_name?: string | null;
+  profession_category?: string | null;
   profession?: string | null;
+  engineering_discipline?: string | null;
+  industry?: string | null;
   postcode?: string | null;
   work_radius_miles?: number | null;
   ir35_preference?: string | null;
   rate_type?: string | null;
   day_rate?: number | null;
   hourly_rate?: number | null;
-  engineering_discipline?: string | null;
-  industry?: string | null;
   avatar_url?: string | null;
   cv_url?: string | null;
   bio?: string | null;
   skills?: string | null;
+  experience_level?: string | null;
 }) {
   const items = [
-    { key: "first_name", label: "First name", w: 10, ok: isFilled(p.first_name) },
-    { key: "last_name", label: "Last name", w: 10, ok: isFilled(p.last_name) },
-    { key: "profession", label: "Profession", w: 15, ok: isFilled(p.profession) },
-    { key: "postcode", label: "Postcode", w: 10, ok: isFilled(p.postcode) },
-    { key: "work_radius_miles", label: "Work radius", w: 5, ok: isFilled(p.work_radius_miles) },
-    { key: "ir35_preference", label: "IR35 preference", w: 5, ok: isFilled(p.ir35_preference) },
-    { key: "rate_type", label: "Rate type", w: 5, ok: isFilled(p.rate_type) },
+    { label: "First name", w: 8, ok: isFilled(p.first_name) },
+    { label: "Last name", w: 8, ok: isFilled(p.last_name) },
+    { label: "Profession category", w: 10, ok: isFilled(p.profession_category) },
+    { label: "Profession", w: 10, ok: isFilled(p.profession) },
+    { label: "Engineering discipline", w: 10, ok: isFilled(p.engineering_discipline) },
+    { label: "Industry", w: 6, ok: isFilled(p.industry) },
+    { label: "Postcode", w: 8, ok: isFilled(p.postcode) },
+    { label: "Work radius", w: 5, ok: isFilled(p.work_radius_miles) },
+    { label: "IR35 preference", w: 5, ok: isFilled(p.ir35_preference) },
+    { label: "Rate type", w: 5, ok: isFilled(p.rate_type) },
     {
-      key: "rate_value",
-      label: "Rate (day/hour)",
-      w: 15,
+      label: "Rate value",
+      w: 10,
       ok:
         (p.rate_type === "day" && isFilled(p.day_rate)) ||
         (p.rate_type === "hour" && isFilled(p.hourly_rate)) ||
         (p.rate_type == null && (isFilled(p.day_rate) || isFilled(p.hourly_rate))),
     },
-    { key: "avatar_url", label: "Profile photo", w: 10, ok: isFilled(p.avatar_url) },
-    { key: "cv_url", label: "CV uploaded", w: 10, ok: isFilled(p.cv_url) },
-    { key: "bio", label: "Bio", w: 10, ok: isFilled(p.bio) },
-    { key: "skills", label: "Skills", w: 5, ok: isFilled(p.skills) },
-    { key: "engineering_discipline", label: "Engineering discipline", w: 5, ok: isFilled(p.engineering_discipline) },
-    { key: "industry", label: "Industry", w: 5, ok: isFilled(p.industry) },
+    { label: "Experience level", w: 5, ok: isFilled(p.experience_level) },
+    { label: "Profile photo", w: 4, ok: isFilled(p.avatar_url) },
+    { label: "CV uploaded", w: 4, ok: isFilled(p.cv_url) },
+    { label: "Bio", w: 6, ok: isFilled(p.bio) },
+    { label: "Skills", w: 6, ok: isFilled(p.skills) },
   ];
 
   const total = items.reduce((a, i) => a + i.w, 0);
@@ -183,23 +208,26 @@ export default function ProfessionalProfilePage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
 
-  const [profession, setProfession] = useState("");
-  const [professionOther, setProfessionOther] = useState("");
-
-  const [engineeringDiscipline, setEngineeringDiscipline] = useState<string>("");
+  const [professionCategory, setProfessionCategory] = useState("Engineering");
+  const [profession, setProfession] = useState("Engineer");
+  const [engineeringDiscipline, setEngineeringDiscipline] = useState("");
   const [industry, setIndustry] = useState("");
   const [industryOther, setIndustryOther] = useState("");
 
   const [postcode, setPostcode] = useState("");
   const [location, setLocation] = useState("");
+  const [workRadiusMiles, setWorkRadiusMiles] = useState("");
 
-  const [workRadiusMiles, setWorkRadiusMiles] = useState<string>("");
-
+  const [experienceLevel, setExperienceLevel] = useState("");
   const [ir35Preference, setIr35Preference] = useState<string>("either");
 
   const [rateType, setRateType] = useState<string>("day");
   const [dayRate, setDayRate] = useState<string>("");
   const [hourlyRate, setHourlyRate] = useState<string>("");
+
+  const [willingToTravel, setWillingToTravel] = useState(false);
+  const [hasVehicle, setHasVehicle] = useState(false);
+  const [hasTools, setHasTools] = useState(false);
 
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [cvUrl, setCvUrl] = useState<string>("");
@@ -225,7 +253,7 @@ export default function ProfessionalProfilePage() {
     const byLabel = options.find((o) => o.label.toLowerCase() === v.toLowerCase());
     if (byLabel) return { value: byLabel.value, other: "" };
 
-    return { value: "other", other: v };
+    return { value: "Other", other: v };
   };
 
   const load = async () => {
@@ -249,18 +277,22 @@ export default function ProfessionalProfilePage() {
 
           setFirstName("");
           setLastName("");
-          setProfession("");
-          setProfessionOther("");
+          setProfessionCategory("Engineering");
+          setProfession("Engineer");
           setEngineeringDiscipline("");
           setIndustry("");
           setIndustryOther("");
           setPostcode("");
           setLocation("");
           setWorkRadiusMiles("");
+          setExperienceLevel("");
           setIr35Preference("either");
           setRateType("day");
           setDayRate("");
           setHourlyRate("");
+          setWillingToTravel(false);
+          setHasVehicle(false);
+          setHasTools(false);
           setAvatarUrl("");
           setCvUrl("");
           setBio("");
@@ -286,11 +318,20 @@ export default function ProfessionalProfilePage() {
       setFirstName((data?.first_name ?? "") as string);
       setLastName((data?.last_name ?? "") as string);
 
-      const p = normaliseIncomingToDropdown(data?.profession ?? "", PROFESSION_OPTIONS);
-      setProfession(p.value);
-      setProfessionOther(p.other);
+      const cat = normaliseIncomingToDropdown(
+        data?.profession_category ?? "Engineering",
+        PROFESSION_CATEGORY_OPTIONS,
+      );
+      setProfessionCategory(cat.value || "Engineering");
 
-      setEngineeringDiscipline((data?.engineering_discipline ?? "") as string);
+      const prof = normaliseIncomingToDropdown(data?.profession ?? "Engineer", PROFESSION_OPTIONS);
+      setProfession(prof.value || "Engineer");
+
+      const disc = normaliseIncomingToDropdown(
+        data?.engineering_discipline ?? "",
+        ENGINEERING_DISCIPLINE_OPTIONS,
+      );
+      setEngineeringDiscipline(disc.value);
 
       const ind = normaliseIncomingToDropdown(data?.industry ?? "", INDUSTRY_OPTIONS);
       setIndustry(ind.value);
@@ -298,13 +339,18 @@ export default function ProfessionalProfilePage() {
 
       setPostcode((data?.postcode ?? "") as string);
       setLocation((data?.location ?? "") as string);
-
       setWorkRadiusMiles(data?.work_radius_miles != null ? String(data.work_radius_miles) : "");
+      setExperienceLevel((data?.experience_level ?? "") as string);
+
       setIr35Preference((data?.ir35_preference ?? "either") as string);
 
       setRateType((data?.rate_type ?? "day") as string);
       setDayRate(data?.day_rate != null ? String(data.day_rate) : "");
       setHourlyRate(data?.hourly_rate != null ? String(data.hourly_rate) : "");
+
+      setWillingToTravel(!!data?.willing_to_travel);
+      setHasVehicle(!!data?.has_vehicle);
+      setHasTools(!!data?.has_tools);
 
       setAvatarUrl((data?.avatar_url ?? "") as string);
       setCvUrl((data?.cv_url ?? "") as string);
@@ -406,16 +452,20 @@ export default function ProfessionalProfilePage() {
         setError("POSTCODE_REQUIRED");
         return;
       }
-
-      const professionFinal =
-        profession === "other" ? professionOther.trim() : profession.trim();
-      if (!professionFinal) {
+      if (!professionCategory.trim()) {
+        setError("PROFESSION_CATEGORY_REQUIRED");
+        return;
+      }
+      if (!profession.trim()) {
         setError("PROFESSION_REQUIRED");
         return;
       }
+      if (!engineeringDiscipline.trim()) {
+        setError("ENGINEERING_DISCIPLINE_REQUIRED");
+        return;
+      }
 
-      const industryFinal =
-        industry === "other" ? industryOther.trim() : industry.trim();
+      const industryFinal = industry === "Other" ? industryOther.trim() : industry.trim();
 
       const day = dayRate.trim() ? Number(dayRate) : null;
       const hour = hourlyRate.trim() ? Number(hourlyRate) : null;
@@ -437,16 +487,26 @@ export default function ProfessionalProfilePage() {
       const payload: any = {
         first_name: firstName.trim(),
         last_name: lastName.trim(),
-        profession: professionFinal,
-        engineering_discipline: engineeringDiscipline.trim() || null,
+
+        profession_category: professionCategory.trim(),
+        profession: profession.trim(),
+        engineering_discipline: engineeringDiscipline.trim(),
         industry: industryFinal || null,
+
         postcode: postcode.trim(),
         location: location.trim() || null,
         work_radius_miles: radius,
+        experience_level: experienceLevel.trim() || null,
+
         ir35_preference: ir35Preference || null,
         rate_type: rateType || null,
         day_rate: day,
         hourly_rate: hour,
+
+        willing_to_travel: willingToTravel,
+        has_vehicle: hasVehicle,
+        has_tools: hasTools,
+
         avatar_url: avatarUrl.trim() || null,
         cv_url: cvUrl.trim() || null,
         bio: bio.trim() || null,
@@ -563,42 +623,45 @@ export default function ProfessionalProfilePage() {
     return computeProfessionalCompleteness({
       first_name: firstName,
       last_name: lastName,
-      profession: profession === "other" ? professionOther : profession,
+      profession_category: professionCategory,
+      profession,
+      engineering_discipline: engineeringDiscipline,
+      industry: industry === "Other" ? industryOther : industry,
       postcode,
       work_radius_miles: Number.isNaN(radius as any) ? null : radius,
       ir35_preference: ir35Preference,
       rate_type: rateType,
       day_rate: Number.isNaN(day as any) ? null : day,
       hourly_rate: Number.isNaN(hour as any) ? null : hour,
-      engineering_discipline: engineeringDiscipline,
-      industry: industry === "other" ? industryOther : industry,
       avatar_url: avatarUrl,
       cv_url: cvUrl,
       bio,
       skills,
+      experience_level: experienceLevel,
     });
   }, [
     firstName,
     lastName,
+    professionCategory,
     profession,
-    professionOther,
+    engineeringDiscipline,
+    industry,
+    industryOther,
     postcode,
     workRadiusMiles,
     ir35Preference,
     rateType,
     dayRate,
     hourlyRate,
-    engineeringDiscipline,
-    industry,
-    industryOther,
     avatarUrl,
     cvUrl,
     bio,
     skills,
+    experienceLevel,
   ]);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 space-y-6">
+    <div className="mx-auto max-w-5xl px-4 py-8 space-y-6">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-white">My profile</h1>
@@ -636,17 +699,6 @@ export default function ProfessionalProfilePage() {
               style={{ width: `${completeness.percent}%` }}
             />
           </div>
-
-          {completeness.missing.length > 0 && (
-            <div className="mt-3 text-xs text-neutral-400">
-              <div className="font-medium text-neutral-300">To improve matches, add:</div>
-              <ul className="mt-1 list-disc pl-5 space-y-0.5">
-                {completeness.missing.slice(0, 6).map((m) => (
-                  <li key={m}>{m}</li>
-                ))}
-              </ul>
-            </div>
-          )}
         </div>
       )}
 
@@ -678,14 +730,13 @@ export default function ProfessionalProfilePage() {
             <div className="flex flex-wrap items-start gap-4">
               <div className="shrink-0">
                 {avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={avatarUrl}
                     alt="Avatar"
                     className="h-16 w-16 rounded-2xl border border-neutral-800 object-cover"
                   />
                 ) : (
-                  <div className="h-16 w-16 rounded-2xl border border-purple-500/40 bg-purple-950/30 flex items-center justify-center">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-purple-500/40 bg-purple-950/30">
                     <span className="text-xs font-semibold text-purple-200">No photo</span>
                   </div>
                 )}
@@ -712,10 +763,6 @@ export default function ProfessionalProfilePage() {
                     <span className="text-xs text-neutral-400">Uploading…</span>
                   )}
                 </div>
-
-                {avatarUrl && (
-                  <div className="text-xs text-neutral-500 break-all">{avatarUrl}</div>
-                )}
               </div>
             </div>
 
@@ -769,7 +816,6 @@ export default function ProfessionalProfilePage() {
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
-                  placeholder="e.g. Ricky"
                 />
               </Field>
 
@@ -778,57 +824,49 @@ export default function ProfessionalProfilePage() {
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
-                  placeholder="e.g. McDonnell"
                 />
+              </Field>
+
+              <Field label="Profession category *">
+                <select
+                  value={professionCategory}
+                  onChange={(e) => setProfessionCategory(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-neutral-200 outline-none focus:border-purple-500"
+                >
+                  {PROFESSION_CATEGORY_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
               </Field>
 
               <Field label="Profession *">
                 <select
                   value={profession}
-                  onChange={(e) => {
-                    setProfession(e.target.value);
-                    if (e.target.value !== "other") setProfessionOther("");
-                  }}
+                  onChange={(e) => setProfession(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-neutral-200 outline-none focus:border-purple-500"
                 >
-                  <option value="">— Select —</option>
                   {PROFESSION_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
                       {o.label}
                     </option>
                   ))}
                 </select>
-
-                {profession === "other" && (
-                  <input
-                    value={professionOther}
-                    onChange={(e) => setProfessionOther(e.target.value)}
-                    className="mt-2 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
-                    placeholder="Enter profession"
-                  />
-                )}
-
-                {!professionOther &&
-                  profession &&
-                  profession !== "other" &&
-                  labelFor(PROFESSION_OPTIONS, profession) === "" && (
-                    <div className="mt-1 text-[11px] text-neutral-500">
-                      Saved value: {profession}
-                    </div>
-                  )}
               </Field>
 
-              <Field label="Engineering discipline">
+              <Field label="Engineering discipline *">
                 <select
                   value={engineeringDiscipline}
                   onChange={(e) => setEngineeringDiscipline(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-neutral-200 outline-none focus:border-purple-500"
                 >
-                  <option value="">—</option>
-                  <option value="mechanical">Mechanical</option>
-                  <option value="electrical">Electrical</option>
-                  <option value="multiskilled">Multiskilled</option>
-                  <option value="other">Other</option>
+                  <option value="">— Select —</option>
+                  {ENGINEERING_DISCIPLINE_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
                 </select>
               </Field>
 
@@ -837,7 +875,7 @@ export default function ProfessionalProfilePage() {
                   value={industry}
                   onChange={(e) => {
                     setIndustry(e.target.value);
-                    if (e.target.value !== "other") setIndustryOther("");
+                    if (e.target.value !== "Other") setIndustryOther("");
                   }}
                   className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-neutral-200 outline-none focus:border-purple-500"
                 >
@@ -849,7 +887,7 @@ export default function ProfessionalProfilePage() {
                   ))}
                 </select>
 
-                {industry === "other" && (
+                {industry === "Other" && (
                   <input
                     value={industryOther}
                     onChange={(e) => setIndustryOther(e.target.value)}
@@ -864,16 +902,14 @@ export default function ProfessionalProfilePage() {
                   value={postcode}
                   onChange={(e) => setPostcode(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
-                  placeholder="e.g. SW1A 1AA"
                 />
               </Field>
 
-              <Field label="Location (optional)">
+              <Field label="Location">
                 <input
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
-                  placeholder="e.g. South Wales"
                 />
               </Field>
 
@@ -883,8 +919,22 @@ export default function ProfessionalProfilePage() {
                   onChange={(e) => setWorkRadiusMiles(e.target.value)}
                   inputMode="numeric"
                   className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
-                  placeholder="e.g. 50"
                 />
+              </Field>
+
+              <Field label="Experience level">
+                <select
+                  value={experienceLevel}
+                  onChange={(e) => setExperienceLevel(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-neutral-200 outline-none focus:border-purple-500"
+                >
+                  <option value="">— Select —</option>
+                  {EXPERIENCE_LEVEL_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
               </Field>
 
               <Field label="IR35 preference">
@@ -905,8 +955,8 @@ export default function ProfessionalProfilePage() {
                   onChange={(e) => setRateType(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-neutral-200 outline-none focus:border-purple-500"
                 >
-                  <option value="day">Day rate</option>
-                  <option value="hour">Hourly rate</option>
+                  <option value="day">Day</option>
+                  <option value="hour">Hour</option>
                 </select>
               </Field>
 
@@ -917,7 +967,6 @@ export default function ProfessionalProfilePage() {
                   inputMode="decimal"
                   disabled={rateType === "hour"}
                   className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500 disabled:opacity-60"
-                  placeholder="e.g. 450"
                 />
               </Field>
 
@@ -928,9 +977,26 @@ export default function ProfessionalProfilePage() {
                   inputMode="decimal"
                   disabled={rateType === "day"}
                   className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500 disabled:opacity-60"
-                  placeholder="e.g. 55"
                 />
               </Field>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-3">
+              <ToggleCard
+                label="Willing to travel"
+                checked={willingToTravel}
+                onChange={setWillingToTravel}
+              />
+              <ToggleCard
+                label="Has vehicle"
+                checked={hasVehicle}
+                onChange={setHasVehicle}
+              />
+              <ToggleCard
+                label="Has own tools"
+                checked={hasTools}
+                onChange={setHasTools}
+              />
             </div>
 
             <Field label="Bio">
@@ -949,21 +1015,17 @@ export default function ProfessionalProfilePage() {
                 onChange={(e) => setSkills(e.target.value)}
                 rows={5}
                 className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
-                placeholder={`One skill per line\n\nPLC programming\nFault finding\nPreventive maintenance`}
+                placeholder={`One skill per line\n\nFault finding\nPLC diagnostics\nPPM\nRoot cause analysis`}
               />
               <div className="mt-1 text-[11px] text-neutral-500">
-                Enter one skill per line. These will appear as bullet points on your public profile preview.
+                Enter one skill per line.
               </div>
             </Field>
 
             <div className="rounded-2xl border border-neutral-800/80 bg-neutral-950/50 p-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <div className="text-xs font-medium text-neutral-300">Qualifications</div>
-                  <div className="mt-1 text-xs text-neutral-500">
-                    Add qualifications here. Verification is handled by admin.
-                  </div>
-                </div>
+              <div className="text-xs font-medium text-neutral-300">Qualifications</div>
+              <div className="mt-1 text-xs text-neutral-500">
+                Add qualifications here. Verification is handled by admin.
               </div>
 
               <div className="mt-4 grid gap-4 md:grid-cols-3">
@@ -972,7 +1034,6 @@ export default function ProfessionalProfilePage() {
                     value={qualificationName}
                     onChange={(e) => setQualificationName(e.target.value)}
                     className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
-                    placeholder="e.g. 18th Edition"
                   />
                 </Field>
 
@@ -981,7 +1042,6 @@ export default function ProfessionalProfilePage() {
                     value={qualificationIssuer}
                     onChange={(e) => setQualificationIssuer(e.target.value)}
                     className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
-                    placeholder="e.g. City & Guilds"
                   />
                 </Field>
 
@@ -990,7 +1050,6 @@ export default function ProfessionalProfilePage() {
                     value={qualificationRef}
                     onChange={(e) => setQualificationRef(e.target.value)}
                     className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
-                    placeholder="e.g. 2382"
                   />
                 </Field>
               </div>
@@ -1087,5 +1146,27 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <div className="text-xs font-medium text-neutral-300">{label}</div>
       {children}
     </div>
+  );
+}
+
+function ToggleCard({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <label className="flex items-center gap-3 rounded-xl border border-neutral-800 bg-neutral-950/50 px-4 py-3 text-sm text-neutral-200">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="h-4 w-4 rounded border-neutral-600 bg-neutral-900"
+      />
+      {label}
+    </label>
   );
 }
