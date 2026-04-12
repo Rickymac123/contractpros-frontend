@@ -299,7 +299,7 @@ export default function CompanyJobMatchesPage() {
 
                       <div className="flex flex-wrap gap-2">
                         <Link
-                          href={`/dashboard/company/applications/${item.talent_id}`}
+                          href={`/dashboard/company/talent/${item.talent_id}`}
                           className="rounded-xl border border-neutral-800 bg-neutral-950/50 px-4 py-2 text-xs text-neutral-200 transition hover:bg-neutral-900"
                         >
                           View profile
