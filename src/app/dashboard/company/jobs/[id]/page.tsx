@@ -7,11 +7,43 @@ import { useParams, useRouter } from "next/navigation";
 type Job = {
   id: number;
   title: string;
-  description: string;
-  location: string;
-  profession: string;
-  day_rate_min: number;
-  day_rate_max: number;
+  description?: string | null;
+
+  profession_category?: string | null;
+  profession?: string | null;
+  engineering_discipline?: string | null;
+  industry?: string | null;
+
+  location?: string | null;
+  postcode?: string | null;
+  work_radius_miles?: number | null;
+  site_name?: string | null;
+  site_address?: string | null;
+
+  start_date?: string | null;
+  end_date?: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
+  shift_pattern?: string | null;
+
+  rate_type?: string | null;
+  day_rate_min?: number | null;
+  day_rate_max?: number | null;
+  hourly_rate_min?: number | null;
+  hourly_rate_max?: number | null;
+  ir35_type?: string | null;
+
+  required_skills?: string | null;
+  preferred_skills?: string | null;
+  required_qualifications?: string | null;
+  experience_level?: string | null;
+
+  contract_type?: string | null;
+  is_urgent?: boolean | null;
+  requires_travel?: boolean | null;
+  requires_vehicle?: boolean | null;
+  requires_own_tools?: boolean | null;
+
   company_id?: number;
   is_archived?: boolean;
 };
@@ -42,9 +74,7 @@ export default function CompanyJobDetailPage() {
       const text = await res.text();
 
       if (!res.ok) {
-        setError(
-          `JOB_FETCH_STATUS_${res.status}: ${text || "EMPTY_RESPONSE_FROM_API"}`,
-        );
+        setError(`JOB_FETCH_STATUS_${res.status}: ${text || "EMPTY_RESPONSE_FROM_API"}`);
         setJob(null);
         return;
       }
@@ -59,9 +89,7 @@ export default function CompanyJobDetailPage() {
       }
 
       const jobData =
-        parsed && typeof parsed === "object" && "job" in parsed
-          ? parsed.job
-          : parsed;
+        parsed && typeof parsed === "object" && "job" in parsed ? parsed.job : parsed;
 
       if (!jobData || typeof jobData !== "object") {
         setError("INVALID_JOB_PAYLOAD");
@@ -71,9 +99,7 @@ export default function CompanyJobDetailPage() {
 
       setJob(jobData as Job);
     } catch (err: any) {
-      setError(
-        typeof err?.message === "string" ? err.message : "UNKNOWN_JOB_FETCH_ERROR",
-      );
+      setError(typeof err?.message === "string" ? err.message : "UNKNOWN_JOB_FETCH_ERROR");
       setJob(null);
     } finally {
       setLoading(false);
@@ -107,16 +133,12 @@ export default function CompanyJobDetailPage() {
       const text = await res.text();
 
       if (!res.ok) {
-        console.error("Archive failed:", res.status, text);
-        alert(
-          `Failed to archive job (status ${res.status}). Check console for details.`,
-        );
+        alert(`Failed to archive job (status ${res.status}). ${text || ""}`);
         return;
       }
 
       await fetchJob();
-    } catch (err: any) {
-      console.error("Archive error:", err);
+    } catch {
       alert("An unexpected error occurred while archiving the job.");
     } finally {
       setIsArchiving(false);
@@ -136,16 +158,12 @@ export default function CompanyJobDetailPage() {
       const text = await res.text();
 
       if (!res.ok) {
-        console.error("Restore failed:", res.status, text);
-        alert(
-          `Failed to restore job (status ${res.status}). Check console for details.`,
-        );
+        alert(`Failed to restore job (status ${res.status}). ${text || ""}`);
         return;
       }
 
       await fetchJob();
-    } catch (err: any) {
-      console.error("Restore error:", err);
+    } catch {
       alert("An unexpected error occurred while restoring the job.");
     } finally {
       setIsRestoring(false);
@@ -156,12 +174,12 @@ export default function CompanyJobDetailPage() {
   const isArchived = !!job?.is_archived;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 space-y-6">
+    <div className="mx-auto max-w-6xl px-4 py-8 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Job details</h1>
           <p className="mt-1 text-sm text-neutral-400">
-            View, edit, archive, restore, or source professionals for this job.
+            Full structured view of this role.
           </p>
         </div>
 
@@ -221,11 +239,23 @@ export default function CompanyJobDetailPage() {
                         Archived
                       </span>
                     )}
+
+                    {job.is_urgent ? (
+                      <span className="inline-flex items-center rounded-full border border-red-500/60 bg-red-950/40 px-3 py-1 text-xs font-medium text-red-100">
+                        Urgent
+                      </span>
+                    ) : null}
                   </div>
 
-                  <p className="mt-1 text-sm text-neutral-400">
-                    {job.profession || "Unspecified profession"} ·{" "}
-                    {job.location || "Location not set"}
+                  <p className="mt-2 text-sm text-neutral-400">
+                    {[
+                      job.profession_category,
+                      job.profession,
+                      job.engineering_discipline,
+                      job.location,
+                    ]
+                      .filter(Boolean)
+                      .join(" • ") || "No summary details"}
                   </p>
 
                   <p className="mt-2 text-xs text-neutral-500">
@@ -263,7 +293,6 @@ export default function CompanyJobDetailPage() {
                         >
                           {isArchiving ? "Archiving…" : "Confirm archive"}
                         </button>
-
                         <button
                           type="button"
                           onClick={() => setConfirmArchive(false)}
@@ -293,7 +322,6 @@ export default function CompanyJobDetailPage() {
                       >
                         {isRestoring ? "Restoring…" : "Confirm restore"}
                       </button>
-
                       <button
                         type="button"
                         onClick={() => setConfirmRestore(false)}
@@ -314,45 +342,53 @@ export default function CompanyJobDetailPage() {
               )}
 
               <div className="grid gap-4 md:grid-cols-3">
-                <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-4 py-3">
-                  <p className="text-xs font-medium uppercase tracking-[0.18em] text-neutral-400">
-                    Day rate range
-                  </p>
-                  <p className="mt-1 text-lg font-semibold text-white">
-                    £{job.day_rate_min} – £{job.day_rate_max}
-                  </p>
-                  <p className="mt-1 text-xs text-neutral-500">
-                    Outside IR35 (placeholder)
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-4 py-3">
-                  <p className="text-xs font-medium uppercase tracking-[0.18em] text-neutral-400">
-                    Location
-                  </p>
-                  <p className="mt-1 text-sm text-neutral-200">
-                    {job.location || "Not specified"}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-4 py-3">
-                  <p className="text-xs font-medium uppercase tracking-[0.18em] text-neutral-400">
-                    Profession
-                  </p>
-                  <p className="mt-1 text-sm text-neutral-200">
-                    {job.profession || "Not specified"}
-                  </p>
-                </div>
+                <InfoCard label="Profession category" value={job.profession_category} />
+                <InfoCard label="Profession" value={job.profession} />
+                <InfoCard label="Engineering discipline" value={job.engineering_discipline} />
+                <InfoCard label="Industry" value={job.industry} />
+                <InfoCard label="Location" value={job.location} />
+                <InfoCard label="Postcode" value={job.postcode} />
+                <InfoCard
+                  label="Work radius"
+                  value={
+                    job.work_radius_miles != null ? `${job.work_radius_miles} miles` : undefined
+                  }
+                />
+                <InfoCard label="Site name" value={job.site_name} />
+                <InfoCard label="Site address" value={job.site_address} />
               </div>
 
-              <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-4 py-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
-                  Role overview
-                </p>
-                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-neutral-200">
-                  {job.description || "No description provided for this job."}
-                </p>
+              <div className="grid gap-4 md:grid-cols-3">
+                <InfoCard label="Start date" value={formatDate(job.start_date)} />
+                <InfoCard label="End date" value={formatDate(job.end_date)} />
+                <InfoCard label="Shift pattern" value={job.shift_pattern} />
+                <InfoCard label="Start time" value={formatTime(job.start_time)} />
+                <InfoCard label="End time" value={formatTime(job.end_time)} />
+                <InfoCard label="Contract type" value={job.contract_type} />
               </div>
+
+              <div className="grid gap-4 md:grid-cols-3">
+                <InfoCard label="Rate type" value={job.rate_type} />
+                <InfoCard
+                  label="Day rate range"
+                  value={formatRange(job.day_rate_min, job.day_rate_max, "day")}
+                />
+                <InfoCard
+                  label="Hourly rate range"
+                  value={formatRange(job.hourly_rate_min, job.hourly_rate_max, "hour")}
+                />
+                <InfoCard label="IR35" value={job.ir35_type} />
+                <InfoCard label="Urgent" value={boolLabel(job.is_urgent)} />
+                <InfoCard label="Travel required" value={boolLabel(job.requires_travel)} />
+                <InfoCard label="Vehicle required" value={boolLabel(job.requires_vehicle)} />
+                <InfoCard label="Own tools required" value={boolLabel(job.requires_own_tools)} />
+                <InfoCard label="Experience level" value={job.experience_level} />
+              </div>
+
+              <TextCard label="Role overview" value={job.description} />
+              <TextCard label="Required skills" value={job.required_skills} />
+              <TextCard label="Preferred skills" value={job.preferred_skills} />
+              <TextCard label="Required qualifications" value={job.required_qualifications} />
 
               <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
@@ -394,4 +430,57 @@ export default function CompanyJobDetailPage() {
       </div>
     </div>
   );
+}
+
+function InfoCard({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-4 py-3">
+      <p className="text-xs font-medium uppercase tracking-[0.18em] text-neutral-400">
+        {label}
+      </p>
+      <p className="mt-1 text-sm text-neutral-200">{value?.trim() ? value : "Not specified"}</p>
+    </div>
+  );
+}
+
+function TextCard({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-4 py-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
+        {label}
+      </p>
+      <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-neutral-200">
+        {value?.trim() ? value : "Not specified."}
+      </p>
+    </div>
+  );
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleDateString("en-GB");
+}
+
+function formatTime(value?: string | null) {
+  if (!value) return "";
+  return String(value).slice(0, 5);
+}
+
+function formatRange(
+  min?: number | null,
+  max?: number | null,
+  unit?: "day" | "hour",
+) {
+  if (min == null && max == null) return "";
+  const suffix = unit === "hour" ? "/hr" : unit === "day" ? "/day" : "";
+  if (min != null && max != null) return `£${min} – £${max}${suffix}`;
+  if (min != null) return `From £${min}${suffix}`;
+  return `Up to £${max}${suffix}`;
+}
+
+function boolLabel(value?: boolean | null) {
+  if (value == null) return "";
+  return value ? "Yes" : "No";
 }
