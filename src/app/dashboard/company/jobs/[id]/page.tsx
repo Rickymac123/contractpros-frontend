@@ -191,268 +191,371 @@ export default function CompanyJobDetailPage() {
         </button>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-neutral-800/80 bg-neutral-950/70">
-        <div className="border-b border-neutral-800/80 bg-gradient-to-r from-purple-900/30 via-neutral-900 to-neutral-950 px-6 py-4">
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-purple-300/80">
-            Company job
-          </p>
-          <p className="mt-1 text-xs text-neutral-400">
-            ContractPro&apos;s – Contract & Interim Talent
-          </p>
-        </div>
-
-        <div className="space-y-6 px-6 py-6">
-          {loading && (
-            <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-4 py-10 text-center text-sm text-neutral-400">
-              Loading job…
-            </div>
-          )}
-
-          {!loading && error && (
+      <div className="overflow-hidden rounded-3xl border border-neutral-800/80 bg-neutral-950/70 shadow-[0_0_40px_rgba(0,0,0,0.45)]">
+        <div className="border-b border-neutral-800/80 bg-gradient-to-r from-purple-900/30 via-neutral-900 to-neutral-950 px-6 py-6">
+          {loading ? (
+            <div className="text-sm text-neutral-400">Loading job…</div>
+          ) : error ? (
             <div className="rounded-2xl border border-red-500/40 bg-red-950/40 px-4 py-3 text-sm text-red-200">
               <p className="font-medium">Job not found</p>
               <p className="mt-1 break-all text-xs text-red-200/80">{error}</p>
             </div>
-          )}
-
-          {!loading && !error && !job && (
-            <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-4 py-10 text-center text-sm text-neutral-400">
-              No job data available.
-            </div>
-          )}
-
-          {!loading && !error && job && (
-            <>
-              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-xl font-semibold text-white">{job.title}</h2>
-
-                    {!isArchived ? (
-                      <span className="inline-flex items-center gap-2 rounded-full border border-purple-500/60 bg-purple-950/40 px-3 py-1 text-xs font-medium text-purple-100">
-                        <span className="h-1.5 w-1.5 rounded-full bg-purple-300" />
-                        Active
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-2 rounded-full border border-neutral-600/70 bg-neutral-900/70 px-3 py-1 text-xs font-medium text-neutral-100">
-                        <span className="h-1.5 w-1.5 rounded-full bg-neutral-300" />
-                        Archived
-                      </span>
-                    )}
-
-                    {job.is_urgent ? (
-                      <span className="inline-flex items-center rounded-full border border-red-500/60 bg-red-950/40 px-3 py-1 text-xs font-medium text-red-100">
-                        Urgent
-                      </span>
-                    ) : null}
-                  </div>
-
-                  <p className="mt-2 text-sm text-neutral-400">
-                    {[
-                      job.profession_category,
-                      job.profession,
-                      job.engineering_discipline,
-                      job.location,
-                    ]
-                      .filter(Boolean)
-                      .join(" • ") || "No summary details"}
-                  </p>
-
-                  <p className="mt-2 text-xs text-neutral-500">
-                    Job ID: <span className="font-mono text-neutral-200">#{job.id}</span>
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={handleEdit}
-                    disabled={!jobId || isArchived}
-                    className="rounded-xl border border-purple-500/70 bg-purple-700/30 px-4 py-2 text-xs font-medium text-purple-50 transition hover:border-purple-400 hover:bg-purple-600/40 disabled:cursor-not-allowed disabled:border-neutral-700 disabled:bg-neutral-900 disabled:text-neutral-500"
-                  >
-                    Edit job
-                  </button>
+          ) : !job ? (
+            <div className="text-sm text-neutral-400">No job data available.</div>
+          ) : (
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-purple-500/40 bg-purple-950/30 px-3 py-1 text-[11px] font-medium text-purple-200">
+                    Job #{job.id}
+                  </span>
 
                   {!isArchived ? (
-                    !confirmArchive ? (
-                      <button
-                        type="button"
-                        onClick={() => setConfirmArchive(true)}
-                        disabled={isArchiving || !jobId}
-                        className="rounded-xl border border-red-500/70 bg-red-900/40 px-4 py-2 text-xs font-medium text-red-50 transition hover:border-red-400 hover:bg-red-800/60 disabled:cursor-not-allowed disabled:border-neutral-700 disabled:bg-neutral-900 disabled:text-neutral-500"
-                      >
-                        Archive job
-                      </button>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          onClick={handleArchive}
-                          disabled={isArchiving}
-                          className="rounded-xl border border-red-400/80 bg-red-800/60 px-4 py-2 text-xs font-medium text-red-50 transition hover:bg-red-700/70 disabled:cursor-not-allowed disabled:border-neutral-700 disabled:bg-neutral-900 disabled:text-neutral-500"
-                        >
-                          {isArchiving ? "Archiving…" : "Confirm archive"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setConfirmArchive(false)}
-                          disabled={isArchiving}
-                          className="rounded-xl border border-neutral-700 bg-neutral-900/70 px-4 py-2 text-xs font-medium text-neutral-200 transition hover:border-neutral-500 hover:bg-neutral-800 disabled:opacity-60"
-                        >
-                          Cancel
-                        </button>
-                      </>
-                    )
-                  ) : !confirmRestore ? (
+                    <StatusTag label="Active" tone="purple" />
+                  ) : (
+                    <StatusTag label="Archived" tone="neutral" />
+                  )}
+
+                  {job.is_urgent ? <StatusTag label="Urgent" tone="red" /> : null}
+                  {job.ir35_type ? <StatusTag label={`${job.ir35_type} IR35`} tone="neutral" /> : null}
+                  {job.contract_type ? <StatusTag label={job.contract_type} tone="neutral" /> : null}
+                </div>
+
+                <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white">
+                  {job.title}
+                </h2>
+
+                <p className="mt-3 text-sm text-neutral-400">
+                  {[
+                    job.profession_category,
+                    job.profession,
+                    job.engineering_discipline,
+                    job.industry,
+                    job.location,
+                  ]
+                    .filter(Boolean)
+                    .join(" • ") || "No summary details"}
+                </p>
+
+                <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <TopStat
+                    label="Rate"
+                    value={
+                      job.rate_type === "hour"
+                        ? formatRange(job.hourly_rate_min, job.hourly_rate_max, "hour")
+                        : formatRange(job.day_rate_min, job.day_rate_max, "day")
+                    }
+                  />
+                  <TopStat label="Discipline" value={job.engineering_discipline} />
+                  <TopStat label="Location" value={job.location} />
+                  <TopStat label="Experience" value={job.experience_level} />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2 lg:justify-end">
+                <button
+                  type="button"
+                  onClick={handleEdit}
+                  disabled={!jobId || isArchived}
+                  className="rounded-xl border border-purple-500/70 bg-purple-700/30 px-4 py-2 text-xs font-medium text-purple-50 transition hover:border-purple-400 hover:bg-purple-600/40 disabled:cursor-not-allowed disabled:border-neutral-700 disabled:bg-neutral-900 disabled:text-neutral-500"
+                >
+                  Edit job
+                </button>
+
+                {!isArchived ? (
+                  !confirmArchive ? (
                     <button
                       type="button"
-                      onClick={() => setConfirmRestore(true)}
-                      disabled={isRestoring || !jobId}
-                      className="rounded-xl border border-purple-500/70 bg-purple-700/30 px-4 py-2 text-xs font-medium text-purple-50 transition hover:border-purple-400 hover:bg-purple-600/40 disabled:opacity-60"
+                      onClick={() => setConfirmArchive(true)}
+                      disabled={isArchiving || !jobId}
+                      className="rounded-xl border border-red-500/70 bg-red-900/40 px-4 py-2 text-xs font-medium text-red-50 transition hover:border-red-400 hover:bg-red-800/60 disabled:cursor-not-allowed disabled:border-neutral-700 disabled:bg-neutral-900 disabled:text-neutral-500"
                     >
-                      Restore job
+                      Archive job
                     </button>
                   ) : (
                     <>
                       <button
                         type="button"
-                        onClick={handleRestore}
-                        disabled={isRestoring}
-                        className="rounded-xl border border-purple-400/80 bg-purple-700/50 px-4 py-2 text-xs font-medium text-purple-50 transition hover:bg-purple-700/60 disabled:opacity-60"
+                        onClick={handleArchive}
+                        disabled={isArchiving}
+                        className="rounded-xl border border-red-400/80 bg-red-800/60 px-4 py-2 text-xs font-medium text-red-50 transition hover:bg-red-700/70 disabled:cursor-not-allowed disabled:border-neutral-700 disabled:bg-neutral-900 disabled:text-neutral-500"
                       >
-                        {isRestoring ? "Restoring…" : "Confirm restore"}
+                        {isArchiving ? "Archiving…" : "Confirm archive"}
                       </button>
                       <button
                         type="button"
-                        onClick={() => setConfirmRestore(false)}
-                        disabled={isRestoring}
+                        onClick={() => setConfirmArchive(false)}
+                        disabled={isArchiving}
                         className="rounded-xl border border-neutral-700 bg-neutral-900/70 px-4 py-2 text-xs font-medium text-neutral-200 transition hover:border-neutral-500 hover:bg-neutral-800 disabled:opacity-60"
                       >
                         Cancel
                       </button>
                     </>
-                  )}
+                  )
+                ) : !confirmRestore ? (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmRestore(true)}
+                    disabled={isRestoring || !jobId}
+                    className="rounded-xl border border-purple-500/70 bg-purple-700/30 px-4 py-2 text-xs font-medium text-purple-50 transition hover:border-purple-400 hover:bg-purple-600/40 disabled:opacity-60"
+                  >
+                    Restore job
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleRestore}
+                      disabled={isRestoring}
+                      className="rounded-xl border border-purple-400/80 bg-purple-700/50 px-4 py-2 text-xs font-medium text-purple-50 transition hover:bg-purple-700/60 disabled:opacity-60"
+                    >
+                      {isRestoring ? "Restoring…" : "Confirm restore"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmRestore(false)}
+                      disabled={isRestoring}
+                      className="rounded-xl border border-neutral-700 bg-neutral-900/70 px-4 py-2 text-xs font-medium text-neutral-200 transition hover:border-neutral-500 hover:bg-neutral-800 disabled:opacity-60"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {!loading && !error && job && (
+          <div className="space-y-6 px-6 py-6">
+            {isArchived && (
+              <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-4 py-3 text-sm text-neutral-200">
+                This job is archived. Editing and sourcing actions are disabled until you restore it.
+              </div>
+            )}
+
+            <Section title="Role overview">
+              <TextBlock value={job.description} empty="No description provided." />
+            </Section>
+
+            <Section title="Classification">
+              <DetailGrid
+                items={[
+                  ["Profession category", job.profession_category],
+                  ["Profession", job.profession],
+                  ["Engineering discipline", job.engineering_discipline],
+                  ["Industry", job.industry],
+                  ["Experience level", job.experience_level],
+                  ["Contract type", job.contract_type],
+                ]}
+              />
+            </Section>
+
+            <Section title="Location & site">
+              <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FieldBlock label="Location" value={job.location} />
+                  <FieldBlock label="Postcode" value={job.postcode} />
+                  <FieldBlock
+                    label="Work radius"
+                    value={job.work_radius_miles != null ? `${job.work_radius_miles} miles` : ""}
+                  />
+                  <FieldBlock label="Site name" value={job.site_name} />
                 </div>
+
+                <FieldBlock label="Site address" value={job.site_address} multiline />
               </div>
+            </Section>
 
-              {isArchived && (
-                <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-4 py-3 text-sm text-neutral-200">
-                  This job is archived. Editing and sourcing actions are disabled until you restore it.
-                </div>
-              )}
-
-              <div className="grid gap-4 md:grid-cols-3">
-                <InfoCard label="Profession category" value={job.profession_category} />
-                <InfoCard label="Profession" value={job.profession} />
-                <InfoCard label="Engineering discipline" value={job.engineering_discipline} />
-                <InfoCard label="Industry" value={job.industry} />
-                <InfoCard label="Location" value={job.location} />
-                <InfoCard label="Postcode" value={job.postcode} />
-                <InfoCard
-                  label="Work radius"
-                  value={
-                    job.work_radius_miles != null ? `${job.work_radius_miles} miles` : undefined
-                  }
-                />
-                <InfoCard label="Site name" value={job.site_name} />
-                <InfoCard label="Site address" value={job.site_address} />
+            <Section title="Schedule">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                <FieldBlock label="Start date" value={formatDate(job.start_date)} />
+                <FieldBlock label="End date" value={formatDate(job.end_date)} />
+                <FieldBlock label="Start time" value={formatTime(job.start_time)} />
+                <FieldBlock label="End time" value={formatTime(job.end_time)} />
+                <FieldBlock label="Shift pattern" value={job.shift_pattern} />
               </div>
+            </Section>
 
-              <div className="grid gap-4 md:grid-cols-3">
-                <InfoCard label="Start date" value={formatDate(job.start_date)} />
-                <InfoCard label="End date" value={formatDate(job.end_date)} />
-                <InfoCard label="Shift pattern" value={job.shift_pattern} />
-                <InfoCard label="Start time" value={formatTime(job.start_time)} />
-                <InfoCard label="End time" value={formatTime(job.end_time)} />
-                <InfoCard label="Contract type" value={job.contract_type} />
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
-                <InfoCard label="Rate type" value={job.rate_type} />
-                <InfoCard
+            <Section title="Commercials">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <FieldBlock label="Rate type" value={job.rate_type} />
+                <FieldBlock
                   label="Day rate range"
                   value={formatRange(job.day_rate_min, job.day_rate_max, "day")}
                 />
-                <InfoCard
+                <FieldBlock
                   label="Hourly rate range"
                   value={formatRange(job.hourly_rate_min, job.hourly_rate_max, "hour")}
                 />
-                <InfoCard label="IR35" value={job.ir35_type} />
-                <InfoCard label="Urgent" value={boolLabel(job.is_urgent)} />
-                <InfoCard label="Travel required" value={boolLabel(job.requires_travel)} />
-                <InfoCard label="Vehicle required" value={boolLabel(job.requires_vehicle)} />
-                <InfoCard label="Own tools required" value={boolLabel(job.requires_own_tools)} />
-                <InfoCard label="Experience level" value={job.experience_level} />
+                <FieldBlock label="IR35" value={job.ir35_type} />
               </div>
+            </Section>
 
-              <TextCard label="Role overview" value={job.description} />
-              <TextCard label="Required skills" value={job.required_skills} />
-              <TextCard label="Preferred skills" value={job.preferred_skills} />
-              <TextCard label="Required qualifications" value={job.required_qualifications} />
-
-              <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-4 py-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
-                  Sourcing options
-                </p>
-                <p className="mt-2 text-sm text-neutral-400">
-                  Search matching professionals first, or review applications already received for this job.
-                </p>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Link
-                    href={`/dashboard/company/jobs/${job.id}/search`}
-                    className="rounded-xl border border-purple-500/70 bg-purple-700/30 px-4 py-2 text-xs font-medium text-purple-50 transition hover:border-purple-400 hover:bg-purple-600/40"
-                  >
-                    Search matching professionals
-                  </Link>
-
-                  <Link
-                    href={`/dashboard/company/jobs/${job.id}/applications`}
-                    className="rounded-xl border border-neutral-800 bg-neutral-950/70 px-4 py-2 text-xs font-medium text-neutral-200 transition hover:bg-neutral-900"
-                  >
-                    View applications
-                  </Link>
-                </div>
+            <Section title="Requirements">
+              <div className="grid gap-4 lg:grid-cols-3">
+                <FieldBlock label="Required skills" value={job.required_skills} multiline />
+                <FieldBlock label="Preferred skills" value={job.preferred_skills} multiline />
+                <FieldBlock
+                  label="Required qualifications"
+                  value={job.required_qualifications}
+                  multiline
+                />
               </div>
+            </Section>
 
-              <div className="mt-2 flex justify-between gap-3 border-t border-neutral-800 pt-4">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="text-xs text-neutral-400 underline-offset-4 hover:text-neutral-200 hover:underline"
+            <Section title="Job flags">
+              <div className="flex flex-wrap gap-2">
+                <FlagPill label="Urgent" active={!!job.is_urgent} />
+                <FlagPill label="Requires travel" active={!!job.requires_travel} />
+                <FlagPill label="Requires vehicle" active={!!job.requires_vehicle} />
+                <FlagPill label="Requires own tools" active={!!job.requires_own_tools} />
+              </div>
+            </Section>
+
+            <Section title="Sourcing options">
+              <p className="text-sm text-neutral-400">
+                Search matching professionals first, or review applications already received for this job.
+              </p>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link
+                  href={`/dashboard/company/jobs/${job.id}/search`}
+                  className="rounded-xl border border-purple-500/70 bg-purple-700/30 px-4 py-2 text-xs font-medium text-purple-50 transition hover:border-purple-400 hover:bg-purple-600/40"
                 >
-                  Back to job list
-                </button>
+                  Search matching professionals
+                </Link>
+
+                <Link
+                  href={`/dashboard/company/jobs/${job.id}/applications`}
+                  className="rounded-xl border border-neutral-800 bg-neutral-950/70 px-4 py-2 text-xs font-medium text-neutral-200 transition hover:bg-neutral-900"
+                >
+                  View applications
+                </Link>
               </div>
-            </>
-          )}
-        </div>
+            </Section>
+
+            <div className="border-t border-neutral-800 pt-4">
+              <button
+                type="button"
+                onClick={handleBack}
+                className="text-xs text-neutral-400 underline-offset-4 hover:text-neutral-200 hover:underline"
+              >
+                Back to job list
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function InfoCard({ label, value }: { label: string; value?: string | null }) {
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-4 py-3">
-      <p className="text-xs font-medium uppercase tracking-[0.18em] text-neutral-400">
+    <section className="rounded-2xl border border-neutral-800/80 bg-neutral-950/50 p-5">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold text-white">{title}</h3>
+      </div>
+      <div className="mt-4">{children}</div>
+    </section>
+  );
+}
+
+function TopStat({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <div className="rounded-2xl border border-neutral-800/80 bg-black/20 px-4 py-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
         {label}
       </p>
-      <p className="mt-1 text-sm text-neutral-200">{value?.trim() ? value : "Not specified"}</p>
+      <p className="mt-2 text-sm font-medium text-white">
+        {value?.trim() ? value : "Not specified"}
+      </p>
     </div>
   );
 }
 
-function TextCard({ label, value }: { label: string; value?: string | null }) {
+function DetailGrid({ items }: { items: Array<[string, string | null | undefined]> }) {
   return (
-    <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-4 py-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {items.map(([label, value]) => (
+        <FieldBlock key={label} label={label} value={value} />
+      ))}
+    </div>
+  );
+}
+
+function FieldBlock({
+  label,
+  value,
+  multiline = false,
+}: {
+  label: string;
+  value?: string | null;
+  multiline?: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-neutral-800/70 bg-black/20 px-4 py-3">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
         {label}
       </p>
-      <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-neutral-200">
-        {value?.trim() ? value : "Not specified."}
+      <p
+        className={`mt-2 text-sm text-neutral-200 ${
+          multiline ? "whitespace-pre-line leading-relaxed" : ""
+        }`}
+      >
+        {value?.trim() ? value : "Not specified"}
       </p>
     </div>
+  );
+}
+
+function TextBlock({ value, empty }: { value?: string | null; empty: string }) {
+  return (
+    <p className="whitespace-pre-line text-sm leading-relaxed text-neutral-200">
+      {value?.trim() ? value : empty}
+    </p>
+  );
+}
+
+function StatusTag({
+  label,
+  tone,
+}: {
+  label: string;
+  tone: "purple" | "neutral" | "red";
+}) {
+  const cls =
+    tone === "red"
+      ? "border-red-500/60 bg-red-950/40 text-red-100"
+      : tone === "neutral"
+        ? "border-neutral-600/70 bg-neutral-900/70 text-neutral-100"
+        : "border-purple-500/60 bg-purple-950/40 text-purple-100";
+
+  return (
+    <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${cls}`}>
+      {label}
+    </span>
+  );
+}
+
+function FlagPill({ label, active }: { label: string; active: boolean }) {
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${
+        active
+          ? "border-emerald-500/50 bg-emerald-950/30 text-emerald-100"
+          : "border-neutral-700 bg-neutral-900 text-neutral-400"
+      }`}
+    >
+      {label}: {active ? "Yes" : "No"}
+    </span>
   );
 }
 
@@ -478,9 +581,4 @@ function formatRange(
   if (min != null && max != null) return `£${min} – £${max}${suffix}`;
   if (min != null) return `From £${min}${suffix}`;
   return `Up to £${max}${suffix}`;
-}
-
-function boolLabel(value?: boolean | null) {
-  if (value == null) return "";
-  return value ? "Yes" : "No";
 }
