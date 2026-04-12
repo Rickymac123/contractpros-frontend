@@ -22,19 +22,23 @@ export async function GET(
       return NextResponse.json({ detail: "UNAUTHENTICATED" }, { status: 401 });
     }
 
+    if (!API_BASE_URL) {
+      return new NextResponse("API_BASE_URL_MISSING", {
+        status: 500,
+        headers: { "Content-Type": "text/plain; charset=utf-8" },
+      });
+    }
+
     const { talentId } = await params;
 
-    const res = await fetch(
-      `${API_BASE_URL}/company/talent/${talentId}/profile`,
-      {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          Cookie: cookiePair,
-        },
-        cache: "no-store",
+    const res = await fetch(`${API_BASE_URL}/company/talent/${talentId}/profile`, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        Cookie: cookiePair,
       },
-    );
+      cache: "no-store",
+    });
 
     const text = await res.text();
 
@@ -46,9 +50,7 @@ export async function GET(
     });
   } catch (error) {
     return new NextResponse(
-      error instanceof Error
-        ? `${error.name}: ${error.message}`
-        : "FAILED_TO_LOAD_TALENT_PROFILE",
+      error instanceof Error ? `${error.name}: ${error.message}` : "FAILED_TO_LOAD_TALENT_PROFILE",
       {
         status: 500,
         headers: {
