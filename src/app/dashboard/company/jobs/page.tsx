@@ -11,7 +11,7 @@ type Job = {
   day_rate_min?: number | null;
   day_rate_max?: number | null;
   description?: string | null;
-  is_archived?: boolean | null; // defensive
+  is_archived?: boolean | null;
 };
 
 export default function CompanyJobsListPage() {
@@ -58,10 +58,8 @@ export default function CompanyJobsListPage() {
     loadJobs();
   }, []);
 
-  // Flattened: remove per-page bg/min-h-screen/gradient shells. Layout owns that.
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-      {/* Header */}
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Company Jobs</h1>
@@ -87,7 +85,6 @@ export default function CompanyJobsListPage() {
         </div>
       </header>
 
-      {/* Content */}
       <div className="overflow-hidden rounded-2xl border border-neutral-800/80 bg-neutral-950/70">
         <div className="border-b border-neutral-800/80 px-6 py-4">
           <div className="flex items-center justify-between">
@@ -191,6 +188,29 @@ export default function CompanyJobsListPage() {
                         {job.description}
                       </p>
                     )}
+
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <Link
+                        href={`/dashboard/company/jobs/${job.id}`}
+                        className="rounded-xl border border-neutral-800 bg-neutral-950/40 px-3 py-2 text-xs text-neutral-200 transition hover:bg-neutral-900"
+                      >
+                        View job
+                      </Link>
+
+                      <Link
+                        href={`/dashboard/company/jobs/${job.id}/search`}
+                        className="rounded-xl border border-purple-500/30 bg-purple-950/20 px-3 py-2 text-xs text-purple-200 transition hover:bg-purple-900/30"
+                      >
+                        Search professionals
+                      </Link>
+
+                      <Link
+                        href={`/dashboard/company/jobs/${job.id}/applications`}
+                        className="rounded-xl border border-neutral-800 bg-neutral-950/40 px-3 py-2 text-xs text-neutral-200 transition hover:bg-neutral-900"
+                      >
+                        Applications
+                      </Link>
+                    </div>
                   </div>
                 );
               })}

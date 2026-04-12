@@ -157,12 +157,11 @@ export default function CompanyJobDetailPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 space-y-6">
-      {/* Top bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Job details</h1>
           <p className="mt-1 text-sm text-neutral-400">
-            View, edit, archive or restore this job.
+            View, edit, archive, restore, or source professionals for this job.
           </p>
         </div>
 
@@ -174,14 +173,13 @@ export default function CompanyJobDetailPage() {
         </button>
       </div>
 
-      {/* Card */}
       <div className="overflow-hidden rounded-2xl border border-neutral-800/80 bg-neutral-950/70">
         <div className="border-b border-neutral-800/80 bg-gradient-to-r from-purple-900/30 via-neutral-900 to-neutral-950 px-6 py-4">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-purple-300/80">
             Company job
           </p>
           <p className="mt-1 text-xs text-neutral-400">
-            RMC – Contract & Interim Talent
+            ContractPro's – Contract & Interim Talent
           </p>
         </div>
 
@@ -207,7 +205,6 @@ export default function CompanyJobDetailPage() {
 
           {!loading && !error && job && (
             <>
-              {/* Title + meta */}
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
                   <h2 className="text-xl font-semibold text-white">{job.title}</h2>
@@ -239,11 +236,10 @@ export default function CompanyJobDetailPage() {
 
               {isArchived && (
                 <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-4 py-3 text-sm text-neutral-200">
-                  This job is archived. Editing is disabled until you restore it.
+                  This job is archived. Editing and sourcing actions are disabled until you restore it.
                 </div>
               )}
 
-              {/* Pay band */}
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-4 py-3">
                   <p className="text-xs font-medium uppercase tracking-[0.18em] text-neutral-400">
@@ -276,7 +272,6 @@ export default function CompanyJobDetailPage() {
                 </div>
               </div>
 
-              {/* Description */}
               <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-4 py-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
                   Role overview
@@ -286,7 +281,31 @@ export default function CompanyJobDetailPage() {
                 </p>
               </div>
 
-              {/* Actions */}
+              <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
+                  Sourcing options
+                </p>
+                <p className="mt-2 text-sm text-neutral-400">
+                  Search matching professionals first, or review applications already received for this job.
+                </p>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Link
+                    href={`/dashboard/company/jobs/${job.id}/search`}
+                    className="rounded-xl border border-purple-500/70 bg-purple-700/30 px-4 py-2 text-xs font-medium text-purple-50 transition hover:border-purple-400 hover:bg-purple-600/40"
+                  >
+                    Search matching professionals
+                  </Link>
+
+                  <Link
+                    href={`/dashboard/company/jobs/${job.id}/applications`}
+                    className="rounded-xl border border-neutral-800 bg-neutral-950/70 px-4 py-2 text-xs font-medium text-neutral-200 transition hover:bg-neutral-900"
+                  >
+                    View applications
+                  </Link>
+                </div>
+              </div>
+
               <div className="mt-2 flex flex-wrap items-center justify-between gap-3 border-t border-neutral-800 pt-4">
                 <div className="flex flex-wrap gap-2">
                   <Link
