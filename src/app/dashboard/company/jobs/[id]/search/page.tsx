@@ -8,17 +8,29 @@ type MatchItem = {
   talent_id: number;
   score: number;
   match_reasons?: string[];
+
   talent_name?: string | null;
+
+  talent_profession_category?: string | null;
   talent_profession?: string | null;
   talent_engineering_discipline?: string | null;
   talent_industry?: string | null;
+  talent_experience_level?: string | null;
+
   talent_location?: string | null;
   talent_postcode?: string | null;
+  talent_work_radius_miles?: number | null;
+
   talent_ir35_preference?: string | null;
+
   talent_rate_type?: string | null;
   talent_day_rate?: number | null;
   talent_hourly_rate?: number | null;
-  talent_work_radius_miles?: number | null;
+
+  talent_willing_to_travel?: boolean | null;
+  talent_has_vehicle?: boolean | null;
+  talent_has_tools?: boolean | null;
+
   talent_avatar_url?: string | null;
   talent_bio?: string | null;
   talent_cv_url?: string | null;
@@ -26,14 +38,15 @@ type MatchItem = {
 
 function extractDetail(text: string, status: number) {
   if (!text) return `STATUS ${status}: EMPTY`;
+
   try {
     const parsed = JSON.parse(text);
     if (parsed && typeof parsed === "object" && "detail" in parsed) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const d = (parsed as any).detail;
       return typeof d === "string" ? d : JSON.stringify(d);
     }
   } catch {}
+
   return `STATUS ${status}: ${text}`;
 }
 
@@ -46,6 +59,7 @@ function initials(name?: string | null) {
 
 function fmtMoney(value?: number | null) {
   if (value == null || Number.isNaN(Number(value))) return null;
+
   return new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: "GBP",
@@ -65,6 +79,16 @@ function scorePillClass(score: number) {
   if (score >= 45) return "border-purple-500/50 bg-purple-950/30 text-purple-200";
   if (score >= 25) return "border-amber-500/50 bg-amber-950/30 text-amber-200";
   return "border-neutral-700 bg-neutral-900 text-neutral-300";
+}
+
+function formatRate(item: MatchItem) {
+  const parts = [
+    item.talent_rate_type?.trim() ? item.talent_rate_type : null,
+    item.talent_day_rate != null ? `Day ${fmtMoney(item.talent_day_rate)}` : null,
+    item.talent_hourly_rate != null ? `Hour ${fmtMoney(item.talent_hourly_rate)}` : null,
+  ].filter(Boolean);
+
+  return parts.length ? parts.join(" • ") : "Rates not set";
 }
 
 export default function CompanyJobMatchesPage() {
@@ -116,6 +140,7 @@ export default function CompanyJobMatchesPage() {
       setError("MISSING_JOB_ID");
       return;
     }
+
     load();
   }, [jobId]);
 
@@ -127,13 +152,19 @@ export default function CompanyJobMatchesPage() {
     return sortedItems.filter((item) => item.score >= 45);
   }, [sortedItems]);
 
+  const cvMatches = useMemo(() => {
+    return sortedItems.filter((item) => !!item.talent_cv_url).length;
+  }, [sortedItems]);
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 space-y-6">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-white">Search professionals</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-white">
+            Search professionals
+          </h1>
           <p className="mt-1 text-sm text-neutral-400">
-            Review matching professionals for this job before posting it to the marketplace.
+            Review structured talent matches for this job.
           </p>
         </div>
 
@@ -161,7 +192,7 @@ export default function CompanyJobMatchesPage() {
         <div className="grid gap-4 md:grid-cols-3">
           <StatCard label="Total matches" value={sortedItems.length} />
           <StatCard label="Strong matches" value={strongMatches.length} />
-          <StatCard label="Job ready to post" value={1} />
+          <StatCard label="With CV uploaded" value={cvMatches} />
         </div>
       )}
 
@@ -178,29 +209,31 @@ export default function CompanyJobMatchesPage() {
       )}
 
       {!loading && !error && sortedItems.length === 0 && (
-        <div className="rounded-3xl border border-neutral-800/80 bg-neutral-950/60 shadow-[0_0_40px_rgba(0,0,0,0.45)] overflow-hidden">
+        <div className="overflow-hidden rounded-3xl border border-neutral-800/80 bg-neutral-950/60 shadow-[0_0_40px_rgba(0,0,0,0.45)]">
           <div className="border-b border-neutral-800/70 px-6 py-4">
-            <h2 className="text-sm font-medium text-neutral-200">No suitable matches found</h2>
+            <h2 className="text-sm font-medium text-neutral-200">
+              No suitable matches found
+            </h2>
           </div>
 
           <div className="p-6 space-y-4">
             <p className="text-sm text-neutral-400">
-              No professionals currently match this job strongly enough. You can post the job to the marketplace so professionals can review it and apply.
+              No professionals currently match this job strongly enough. Post the job to the marketplace so professionals can review it and apply.
             </p>
 
             <div className="flex flex-wrap gap-2">
               <Link
-                href="/dashboard/company/jobs"
+                href={`/dashboard/company/jobs/${jobId}`}
                 className="rounded-xl border border-neutral-800 bg-neutral-950/50 px-4 py-2 text-xs text-neutral-200 transition hover:bg-neutral-900"
               >
-                Edit jobs
+                Review job
               </Link>
 
               <Link
                 href="/dashboard/company/jobs"
                 className="rounded-xl border border-purple-500/70 bg-purple-700/30 px-4 py-2 text-xs font-medium text-purple-50 transition hover:border-purple-400 hover:bg-purple-600/40"
               >
-                Post job to marketplace
+                Back to jobs
               </Link>
             </div>
           </div>
@@ -212,50 +245,17 @@ export default function CompanyJobMatchesPage() {
           <div className="space-y-4">
             {sortedItems.map((item) => {
               const reasons = Array.isArray(item.match_reasons) ? item.match_reasons : [];
-              const rateLine = [
-                item.talent_rate_type?.trim() ? item.talent_rate_type : null,
-                item.talent_day_rate != null ? `Day ${fmtMoney(item.talent_day_rate)}` : null,
-                item.talent_hourly_rate != null ? `Hour ${fmtMoney(item.talent_hourly_rate)}` : null,
-              ]
-                .filter(Boolean)
-                .join(" • ");
+              const rateLine = formatRate(item);
 
               return (
                 <div
                   key={item.talent_id}
-                  className="rounded-3xl border border-neutral-800/80 bg-neutral-950/60 shadow-[0_0_30px_rgba(0,0,0,0.4)] overflow-hidden"
+                  className="overflow-hidden rounded-3xl border border-neutral-800/80 bg-neutral-950/60 shadow-[0_0_30px_rgba(0,0,0,0.4)]"
                 >
-                  <div className="border-b border-neutral-800/70 px-6 py-4 flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-medium text-neutral-200">
-                        {item.talent_name || `Talent #${item.talent_id}`}
-                      </div>
-                      <div className="mt-1 text-xs text-neutral-500">
-                        {[
-                          item.talent_profession,
-                          item.talent_engineering_discipline,
-                          item.talent_industry,
-                        ]
-                          .filter(Boolean)
-                          .join(" • ") || "Professional"}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium ${scorePillClass(
-                          item.score,
-                        )}`}
-                      >
-                        {scoreLabel(item.score)} • {item.score}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="p-6">
-                    <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+                  <div className="border-b border-neutral-800/70 px-6 py-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="flex items-start gap-4">
-                        <div className="h-16 w-16 shrink-0 rounded-2xl border border-neutral-800 bg-neutral-900/40 overflow-hidden">
+                        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/40">
                           {item.talent_avatar_url ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -270,8 +270,24 @@ export default function CompanyJobMatchesPage() {
                           )}
                         </div>
 
-                        <div className="space-y-2">
-                          <div className="text-sm text-neutral-300">
+                        <div>
+                          <div className="text-sm font-semibold text-neutral-100">
+                            {item.talent_name || `Talent #${item.talent_id}`}
+                          </div>
+
+                          <div className="mt-1 text-xs text-neutral-500">
+                            {[
+                              item.talent_profession_category,
+                              item.talent_profession,
+                              item.talent_engineering_discipline,
+                              item.talent_experience_level,
+                              item.talent_industry,
+                            ]
+                              .filter(Boolean)
+                              .join(" • ") || "Professional"}
+                          </div>
+
+                          <div className="mt-2 text-xs text-neutral-400">
                             {[
                               item.talent_location,
                               item.talent_postcode,
@@ -282,71 +298,113 @@ export default function CompanyJobMatchesPage() {
                               .filter(Boolean)
                               .join(" • ") || "Location not set"}
                           </div>
-
-                          {rateLine ? (
-                            <div className="text-xs text-neutral-500">{rateLine}</div>
-                          ) : (
-                            <div className="text-xs text-neutral-500">Rates not set</div>
-                          )}
-
-                          {item.talent_ir35_preference ? (
-                            <div className="text-xs text-neutral-500">
-                              IR35: {item.talent_ir35_preference}
-                            </div>
-                          ) : null}
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap gap-2">
-                        <Link
-                          href={`/dashboard/company/talent/${item.talent_id}`}
-                          className="rounded-xl border border-neutral-800 bg-neutral-950/50 px-4 py-2 text-xs text-neutral-200 transition hover:bg-neutral-900"
-                        >
-                          View profile
-                        </Link>
+                      <span
+                        className={`inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium ${scorePillClass(
+                          item.score,
+                        )}`}
+                      >
+                        {scoreLabel(item.score)} • {item.score}
+                      </span>
+                    </div>
+                  </div>
 
-                        <button
-                          type="button"
-                          onClick={() => router.push(`/dashboard/company/jobs/${jobId}`)}
-                          className="rounded-xl border border-purple-500/70 bg-purple-700/30 px-4 py-2 text-xs font-medium text-purple-50 transition hover:border-purple-400 hover:bg-purple-600/40"
-                        >
-                          Request to book
-                        </button>
-                      </div>
+                  <div className="p-6 space-y-5">
+                    <div className="grid gap-3 md:grid-cols-3">
+                      <InfoBox label="Rate" value={rateLine} />
+                      <InfoBox
+                        label="IR35"
+                        value={item.talent_ir35_preference || "Not set"}
+                      />
+                      <InfoBox
+                        label="Experience"
+                        value={item.talent_experience_level || "Not set"}
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <CapabilityPill
+                        label="Willing to travel"
+                        active={!!item.talent_willing_to_travel}
+                      />
+                      <CapabilityPill
+                        label="Own vehicle"
+                        active={!!item.talent_has_vehicle}
+                      />
+                      <CapabilityPill
+                        label="Own tools"
+                        active={!!item.talent_has_tools}
+                      />
+
+                      {item.talent_cv_url ? (
+                        <span className="rounded-full border border-emerald-500/40 bg-emerald-950/30 px-3 py-1 text-[11px] font-medium text-emerald-200">
+                          CV uploaded
+                        </span>
+                      ) : (
+                        <span className="rounded-full border border-neutral-700 bg-neutral-900/70 px-3 py-1 text-[11px] text-neutral-400">
+                          No CV
+                        </span>
+                      )}
                     </div>
 
                     {reasons.length > 0 && (
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {reasons.map((reason, index) => (
-                          <span
-                            key={`${reason}-${index}`}
-                            className="rounded-full border border-neutral-700 bg-neutral-900/70 px-3 py-1 text-[11px] text-neutral-300"
-                          >
-                            {reason}
-                          </span>
-                        ))}
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                          Match reasons
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {reasons.map((reason, index) => (
+                            <span
+                              key={`${reason}-${index}`}
+                              className="rounded-full border border-purple-500/30 bg-purple-950/20 px-3 py-1 text-[11px] text-purple-200"
+                            >
+                              {reason}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
 
                     {item.talent_bio?.trim() && (
-                      <div className="mt-4 rounded-2xl border border-neutral-800 bg-neutral-950/50 px-4 py-3">
+                      <div className="rounded-2xl border border-neutral-800 bg-neutral-950/50 px-4 py-3">
                         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
                           Bio
                         </p>
-                        <p className="mt-1 text-sm text-neutral-200 whitespace-pre-wrap">
+                        <p className="mt-1 whitespace-pre-wrap text-sm text-neutral-200">
                           {item.talent_bio}
                         </p>
                       </div>
                     )}
+
+                    <div className="flex flex-wrap justify-end gap-2 border-t border-neutral-800 pt-4">
+                      <Link
+                        href={`/dashboard/company/talent/${item.talent_id}`}
+                        className="rounded-xl border border-neutral-800 bg-neutral-950/50 px-4 py-2 text-xs text-neutral-200 transition hover:bg-neutral-900"
+                      >
+                        View profile
+                      </Link>
+
+                      <button
+                        type="button"
+                        onClick={() => router.push(`/dashboard/company/jobs/${jobId}`)}
+                        className="rounded-xl border border-purple-500/70 bg-purple-700/30 px-4 py-2 text-xs font-medium text-purple-50 transition hover:border-purple-400 hover:bg-purple-600/40"
+                      >
+                        Request to book
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
 
-          <div className="rounded-3xl border border-neutral-800/80 bg-neutral-950/60 shadow-[0_0_30px_rgba(0,0,0,0.4)] overflow-hidden">
+          <div className="overflow-hidden rounded-3xl border border-neutral-800/80 bg-neutral-950/60 shadow-[0_0_30px_rgba(0,0,0,0.4)]">
             <div className="border-b border-neutral-800/70 px-6 py-4">
-              <h2 className="text-sm font-medium text-neutral-200">Not seeing the right people?</h2>
+              <h2 className="text-sm font-medium text-neutral-200">
+                Not seeing the right people?
+              </h2>
             </div>
 
             <div className="p-6 space-y-4">
@@ -356,17 +414,17 @@ export default function CompanyJobMatchesPage() {
 
               <div className="flex flex-wrap gap-2">
                 <Link
-                  href="/dashboard/company/jobs"
+                  href={`/dashboard/company/jobs/${jobId}`}
                   className="rounded-xl border border-neutral-800 bg-neutral-950/50 px-4 py-2 text-xs text-neutral-200 transition hover:bg-neutral-900"
                 >
-                  Edit job
+                  Review job
                 </Link>
 
                 <Link
                   href="/dashboard/company/jobs"
                   className="rounded-xl border border-purple-500/70 bg-purple-700/30 px-4 py-2 text-xs font-medium text-purple-50 transition hover:border-purple-400 hover:bg-purple-600/40"
                 >
-                  Post job to marketplace
+                  Back to jobs
                 </Link>
               </div>
             </div>
@@ -383,5 +441,30 @@ function StatCard({ label, value }: { label: string; value: number }) {
       <p className="text-xs uppercase tracking-wide text-neutral-400">{label}</p>
       <p className="mt-2 text-3xl font-semibold text-purple-300">{value}</p>
     </div>
+  );
+}
+
+function InfoBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-neutral-800 bg-neutral-950/50 px-4 py-3">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+        {label}
+      </p>
+      <p className="mt-1 text-sm text-neutral-200">{value}</p>
+    </div>
+  );
+}
+
+function CapabilityPill({ label, active }: { label: string; active: boolean }) {
+  return (
+    <span
+      className={`rounded-full border px-3 py-1 text-[11px] font-medium ${
+        active
+          ? "border-emerald-500/40 bg-emerald-950/30 text-emerald-200"
+          : "border-neutral-700 bg-neutral-900/70 text-neutral-500"
+      }`}
+    >
+      {label}: {active ? "Yes" : "No"}
+    </span>
   );
 }
