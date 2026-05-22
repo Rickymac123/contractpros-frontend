@@ -68,15 +68,15 @@ function fmtMoney(value?: number | null) {
 }
 
 function scoreLabel(score: number) {
-  if (score >= 70) return "Strong match";
-  if (score >= 45) return "Good match";
-  if (score >= 25) return "Possible match";
-  return "Weak match";
+  if (score >= 75) return "75%+ match";
+  if (score >= 50) return "50% – 75% match";
+  if (score >= 25) return "25% – 50% match";
+  return "Below 25% match";
 }
 
 function scorePillClass(score: number) {
-  if (score >= 70) return "border-emerald-500/50 bg-emerald-950/30 text-emerald-200";
-  if (score >= 45) return "border-purple-500/50 bg-purple-950/30 text-purple-200";
+  if (score >= 75) return "border-emerald-500/50 bg-emerald-950/30 text-emerald-200";
+  if (score >= 50) return "border-purple-500/50 bg-purple-950/30 text-purple-200";
   if (score >= 25) return "border-amber-500/50 bg-amber-950/30 text-amber-200";
   return "border-neutral-700 bg-neutral-900 text-neutral-300";
 }
@@ -142,14 +142,27 @@ export default function CompanyJobMatchesPage() {
     }
 
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobId]);
 
   const sortedItems = useMemo(() => {
     return [...items].sort((a, b) => b.score - a.score);
   }, [items]);
 
-  const strongMatches = useMemo(() => {
-    return sortedItems.filter((item) => item.score >= 45);
+  const topMatches = useMemo(() => {
+    return sortedItems.filter((item) => item.score >= 75);
+  }, [sortedItems]);
+
+  const goodMatches = useMemo(() => {
+    return sortedItems.filter((item) => item.score >= 50 && item.score < 75);
+  }, [sortedItems]);
+
+  const possibleMatches = useMemo(() => {
+    return sortedItems.filter((item) => item.score >= 25 && item.score < 50);
+  }, [sortedItems]);
+
+  const weakMatches = useMemo(() => {
+    return sortedItems.filter((item) => item.score < 25);
   }, [sortedItems]);
 
   const cvMatches = useMemo(() => {
@@ -164,7 +177,7 @@ export default function CompanyJobMatchesPage() {
             Search professionals
           </h1>
           <p className="mt-1 text-sm text-neutral-400">
-            Review structured talent matches for this job.
+            Review structured talent matches grouped by match strength.
           </p>
         </div>
 
@@ -191,7 +204,7 @@ export default function CompanyJobMatchesPage() {
       {!loading && !error && (
         <div className="grid gap-4 md:grid-cols-3">
           <StatCard label="Total matches" value={sortedItems.length} />
-          <StatCard label="Strong matches" value={strongMatches.length} />
+          <StatCard label="75%+ matches" value={topMatches.length} />
           <StatCard label="With CV uploaded" value={cvMatches} />
         </div>
       )}
@@ -242,162 +255,44 @@ export default function CompanyJobMatchesPage() {
 
       {!loading && !error && sortedItems.length > 0 && (
         <>
-          <div className="space-y-4">
-            {sortedItems.map((item) => {
-              const reasons = Array.isArray(item.match_reasons) ? item.match_reasons : [];
-              const rateLine = formatRate(item);
+          <div className="space-y-6">
+            <MatchGroup
+              title="75% and above"
+              description="Best-fit professionals based on discipline, role, rate, experience and requirements."
+              items={topMatches}
+              emptyText="No 75%+ matches found."
+              jobId={jobId}
+              router={router}
+            />
 
-              return (
-                <div
-                  key={item.talent_id}
-                  className="overflow-hidden rounded-3xl border border-neutral-800/80 bg-neutral-950/60 shadow-[0_0_30px_rgba(0,0,0,0.4)]"
-                >
-                  <div className="border-b border-neutral-800/70 px-6 py-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="flex items-start gap-4">
-                        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/40">
-                          {item.talent_avatar_url ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={item.talent_avatar_url}
-                              alt={item.talent_name ?? "Talent"}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-purple-200">
-                              {initials(item.talent_name)}
-                            </div>
-                          )}
-                        </div>
+            <MatchGroup
+              title="50% – 75%"
+              description="Good potential matches. Review the detail before requesting to book."
+              items={goodMatches}
+              emptyText="No 50% – 75% matches found."
+              jobId={jobId}
+              router={router}
+            />
 
-                        <div>
-                          <div className="text-sm font-semibold text-neutral-100">
-                            {item.talent_name || `Talent #${item.talent_id}`}
-                          </div>
+            <MatchGroup
+              title="25% – 50%"
+              description="Possible matches. These may need closer checking."
+              items={possibleMatches}
+              emptyText="No 25% – 50% matches found."
+              jobId={jobId}
+              router={router}
+            />
 
-                          <div className="mt-1 text-xs text-neutral-500">
-                            {[
-                              item.talent_profession_category,
-                              item.talent_profession,
-                              item.talent_engineering_discipline,
-                              item.talent_experience_level,
-                              item.talent_industry,
-                            ]
-                              .filter(Boolean)
-                              .join(" • ") || "Professional"}
-                          </div>
-
-                          <div className="mt-2 text-xs text-neutral-400">
-                            {[
-                              item.talent_location,
-                              item.talent_postcode,
-                              item.talent_work_radius_miles != null
-                                ? `${item.talent_work_radius_miles}mi radius`
-                                : null,
-                            ]
-                              .filter(Boolean)
-                              .join(" • ") || "Location not set"}
-                          </div>
-                        </div>
-                      </div>
-
-                      <span
-                        className={`inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium ${scorePillClass(
-                          item.score,
-                        )}`}
-                      >
-                        {scoreLabel(item.score)} • {item.score}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="p-6 space-y-5">
-                    <div className="grid gap-3 md:grid-cols-3">
-                      <InfoBox label="Rate" value={rateLine} />
-                      <InfoBox
-                        label="IR35"
-                        value={item.talent_ir35_preference || "Not set"}
-                      />
-                      <InfoBox
-                        label="Experience"
-                        value={item.talent_experience_level || "Not set"}
-                      />
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                      <CapabilityPill
-                        label="Willing to travel"
-                        active={!!item.talent_willing_to_travel}
-                      />
-                      <CapabilityPill
-                        label="Own vehicle"
-                        active={!!item.talent_has_vehicle}
-                      />
-                      <CapabilityPill
-                        label="Own tools"
-                        active={!!item.talent_has_tools}
-                      />
-
-                      {item.talent_cv_url ? (
-                        <span className="rounded-full border border-emerald-500/40 bg-emerald-950/30 px-3 py-1 text-[11px] font-medium text-emerald-200">
-                          CV uploaded
-                        </span>
-                      ) : (
-                        <span className="rounded-full border border-neutral-700 bg-neutral-900/70 px-3 py-1 text-[11px] text-neutral-400">
-                          No CV
-                        </span>
-                      )}
-                    </div>
-
-                    {reasons.length > 0 && (
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                          Match reasons
-                        </p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {reasons.map((reason, index) => (
-                            <span
-                              key={`${reason}-${index}`}
-                              className="rounded-full border border-purple-500/30 bg-purple-950/20 px-3 py-1 text-[11px] text-purple-200"
-                            >
-                              {reason}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {item.talent_bio?.trim() && (
-                      <div className="rounded-2xl border border-neutral-800 bg-neutral-950/50 px-4 py-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
-                          Bio
-                        </p>
-                        <p className="mt-1 whitespace-pre-wrap text-sm text-neutral-200">
-                          {item.talent_bio}
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="flex flex-wrap justify-end gap-2 border-t border-neutral-800 pt-4">
-                      <Link
-                        href={`/dashboard/company/talent/${item.talent_id}`}
-                        className="rounded-xl border border-neutral-800 bg-neutral-950/50 px-4 py-2 text-xs text-neutral-200 transition hover:bg-neutral-900"
-                      >
-                        View profile
-                      </Link>
-
-                      <button
-                        type="button"
-                        onClick={() => router.push(`/dashboard/company/jobs/${jobId}`)}
-                        className="rounded-xl border border-purple-500/70 bg-purple-700/30 px-4 py-2 text-xs font-medium text-purple-50 transition hover:border-purple-400 hover:bg-purple-600/40"
-                      >
-                        Request to book
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {weakMatches.length > 0 && (
+              <MatchGroup
+                title="Below 25%"
+                description="Weak matches shown for transparency."
+                items={weakMatches}
+                emptyText="No weak matches."
+                jobId={jobId}
+                router={router}
+              />
+            )}
           </div>
 
           <div className="overflow-hidden rounded-3xl border border-neutral-800/80 bg-neutral-950/60 shadow-[0_0_30px_rgba(0,0,0,0.4)]">
@@ -431,6 +326,203 @@ export default function CompanyJobMatchesPage() {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+function MatchGroup({
+  title,
+  description,
+  items,
+  emptyText,
+  jobId,
+  router,
+}: {
+  title: string;
+  description: string;
+  items: MatchItem[];
+  emptyText: string;
+  jobId?: string;
+  router: ReturnType<typeof useRouter>;
+}) {
+  return (
+    <section className="overflow-hidden rounded-3xl border border-neutral-800/80 bg-neutral-950/50">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-800/70 px-6 py-4">
+        <div>
+          <h2 className="text-sm font-semibold text-neutral-100">{title}</h2>
+          <p className="mt-1 text-xs text-neutral-500">{description}</p>
+        </div>
+
+        <span className="rounded-full border border-neutral-700 bg-neutral-900/70 px-3 py-1 text-xs text-neutral-300">
+          {items.length} result{items.length === 1 ? "" : "s"}
+        </span>
+      </div>
+
+      <div className="space-y-4 p-4 md:p-6">
+        {items.length === 0 ? (
+          <div className="rounded-2xl border border-neutral-800 bg-neutral-950/50 px-4 py-5 text-sm text-neutral-500">
+            {emptyText}
+          </div>
+        ) : (
+          items.map((item) => (
+            <MatchCard
+              key={item.talent_id}
+              item={item}
+              jobId={jobId}
+              router={router}
+            />
+          ))
+        )}
+      </div>
+    </section>
+  );
+}
+
+function MatchCard({
+  item,
+  jobId,
+  router,
+}: {
+  item: MatchItem;
+  jobId?: string;
+  router: ReturnType<typeof useRouter>;
+}) {
+  const reasons = Array.isArray(item.match_reasons) ? item.match_reasons : [];
+  const rateLine = formatRate(item);
+
+  return (
+    <div className="overflow-hidden rounded-3xl border border-neutral-800/80 bg-neutral-950/60 shadow-[0_0_30px_rgba(0,0,0,0.4)]">
+      <div className="border-b border-neutral-800/70 px-6 py-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex items-start gap-4">
+            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/40">
+              {item.talent_avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={item.talent_avatar_url}
+                  alt={item.talent_name ?? "Talent"}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-purple-200">
+                  {initials(item.talent_name)}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <div className="text-sm font-semibold text-neutral-100">
+                {item.talent_name || `Talent #${item.talent_id}`}
+              </div>
+
+              <div className="mt-1 text-xs text-neutral-500">
+                {[
+                  item.talent_profession_category,
+                  item.talent_profession,
+                  item.talent_engineering_discipline,
+                  item.talent_experience_level,
+                  item.talent_industry,
+                ]
+                  .filter(Boolean)
+                  .join(" • ") || "Professional"}
+              </div>
+
+              <div className="mt-2 text-xs text-neutral-400">
+                {[
+                  item.talent_location,
+                  item.talent_postcode,
+                  item.talent_work_radius_miles != null
+                    ? `${item.talent_work_radius_miles}mi radius`
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(" • ") || "Location not set"}
+              </div>
+            </div>
+          </div>
+
+          <span
+            className={`inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-medium ${scorePillClass(
+              item.score,
+            )}`}
+          >
+            {scoreLabel(item.score)} • {item.score}%
+          </span>
+        </div>
+      </div>
+
+      <div className="p-6 space-y-5">
+        <div className="grid gap-3 md:grid-cols-3">
+          <InfoBox label="Rate" value={rateLine} />
+          <InfoBox label="IR35" value={item.talent_ir35_preference || "Not set"} />
+          <InfoBox label="Experience" value={item.talent_experience_level || "Not set"} />
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <CapabilityPill
+            label="Willing to travel"
+            active={!!item.talent_willing_to_travel}
+          />
+          <CapabilityPill label="Own vehicle" active={!!item.talent_has_vehicle} />
+          <CapabilityPill label="Own tools" active={!!item.talent_has_tools} />
+
+          {item.talent_cv_url ? (
+            <span className="rounded-full border border-emerald-500/40 bg-emerald-950/30 px-3 py-1 text-[11px] font-medium text-emerald-200">
+              CV uploaded
+            </span>
+          ) : (
+            <span className="rounded-full border border-neutral-700 bg-neutral-900/70 px-3 py-1 text-[11px] text-neutral-400">
+              No CV
+            </span>
+          )}
+        </div>
+
+        {reasons.length > 0 && (
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+              Match reasons
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {reasons.map((reason, index) => (
+                <span
+                  key={`${reason}-${index}`}
+                  className="rounded-full border border-purple-500/30 bg-purple-950/20 px-3 py-1 text-[11px] text-purple-200"
+                >
+                  {reason}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {item.talent_bio?.trim() && (
+          <div className="rounded-2xl border border-neutral-800 bg-neutral-950/50 px-4 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+              Bio
+            </p>
+            <p className="mt-1 whitespace-pre-wrap text-sm text-neutral-200">
+              {item.talent_bio}
+            </p>
+          </div>
+        )}
+
+        <div className="flex flex-wrap justify-end gap-2 border-t border-neutral-800 pt-4">
+          <Link
+            href={`/dashboard/company/talent/${item.talent_id}`}
+            className="rounded-xl border border-neutral-800 bg-neutral-950/50 px-4 py-2 text-xs text-neutral-200 transition hover:bg-neutral-900"
+          >
+            View profile
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => router.push(`/dashboard/company/jobs/${jobId}`)}
+            className="rounded-xl border border-purple-500/70 bg-purple-700/30 px-4 py-2 text-xs font-medium text-purple-50 transition hover:border-purple-400 hover:bg-purple-600/40"
+          >
+            Request to book
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
