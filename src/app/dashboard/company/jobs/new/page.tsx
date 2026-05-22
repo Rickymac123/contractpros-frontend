@@ -46,6 +46,19 @@ type FormState = {
   requires_own_tools: boolean;
 };
 
+const INDUSTRY_OPTIONS = [
+  "Food Manufacturing",
+  "FMCG",
+  "Pharma",
+  "Medical Devices",
+  "Automotive",
+  "Aerospace",
+  "Packaging",
+  "Chemicals",
+  "Energy & Utilities",
+  "Other",
+];
+
 export default function NewJobPage() {
   const router = useRouter();
 
@@ -310,13 +323,19 @@ export default function NewJobPage() {
                   <label className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
                     Industry
                   </label>
-                  <input
+                  <select
                     name="industry"
                     value={form.industry}
                     onChange={handleChange}
-                    placeholder="e.g. Food Manufacturing"
-                    className="w-full rounded-xl border border-neutral-700 bg-neutral-950/80 px-3 py-2 text-sm text-white outline-none placeholder:text-neutral-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/40"
-                  />
+                    className="w-full rounded-xl border border-neutral-700 bg-neutral-950/80 px-3 py-2 text-sm text-white outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/40"
+                  >
+                    <option value="">Select industry</option>
+                    {INDUSTRY_OPTIONS.map((industry) => (
+                      <option key={industry} value={industry}>
+                        {industry}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </section>
@@ -616,42 +635,55 @@ export default function NewJobPage() {
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
-                  Required skills
+                  Required skills — one per line
                 </label>
                 <textarea
                   name="required_skills"
                   value={form.required_skills}
                   onChange={handleChange}
-                  rows={3}
-                  placeholder="e.g. Fault finding, PLC diagnostics, PPM, root cause analysis"
+                  rows={5}
+                  placeholder={`One skill per line
+
+Fault finding
+PLC diagnostics
+PPM
+Root cause analysis`}
                   className="w-full rounded-xl border border-neutral-700 bg-neutral-950/80 px-3 py-2 text-sm text-white outline-none placeholder:text-neutral-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/40"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
-                  Preferred skills
+                  Preferred skills — one per line
                 </label>
                 <textarea
                   name="preferred_skills"
                   value={form.preferred_skills}
                   onChange={handleChange}
-                  rows={3}
-                  placeholder="Nice-to-have skills"
+                  rows={4}
+                  placeholder={`Nice-to-have skills
+
+Siemens PLC
+Food manufacturing
+Packaging lines`}
                   className="w-full rounded-xl border border-neutral-700 bg-neutral-950/80 px-3 py-2 text-sm text-white outline-none placeholder:text-neutral-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/40"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
-                  Required qualifications
+                  Required qualifications — one per line
                 </label>
                 <textarea
                   name="required_qualifications"
                   value={form.required_qualifications}
                   onChange={handleChange}
-                  rows={3}
-                  placeholder="e.g. 18th Edition, NVQ Level 3, IOSH"
+                  rows={4}
+                  placeholder={`One qualification per line
+
+18th Edition
+NVQ Level 3
+IOSH`}
                   className="w-full rounded-xl border border-neutral-700 bg-neutral-950/80 px-3 py-2 text-sm text-white outline-none placeholder:text-neutral-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/40"
                 />
               </div>
