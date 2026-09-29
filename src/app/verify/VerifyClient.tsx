@@ -1,65 +1,29 @@
 "use client";
-
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import AuthShell from "@/components/auth/AuthShell";
+import styles from "@/components/auth/auth.module.css";
 
 export default function VerifyClient() {
-  const search = useSearchParams();
-  const token = search.get("token") ?? "";
-
-  const [status, setStatus] = useState<"idle" | "working" | "ok" | "fail">("idle");
-  const [message, setMessage] = useState<string>("");
-
+  const token = useSearchParams().get("token") ?? "";
+  const started = useRef<string | null>(null);
+  const [status, setStatus] = useState("working");
+  const [message, setMessage] = useState("Checking your verification link…");
   useEffect(() => {
-    const run = async () => {
-      if (!token) {
-        setStatus("fail");
-        setMessage("Missing token.");
-        return;
-      }
-
-      setStatus("working");
-      setMessage("");
-
-      const res = await fetch("/api/auth/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
-      });
-
-      const text = await res.text();
-
-      if (!res.ok) {
-        setStatus("fail");
-        setMessage(text || `STATUS ${res.status}`);
-        return;
-      }
-
-      setStatus("ok");
-      setMessage("Email verified. You can sign in now.");
-    };
-
-    run();
+    if (started.current === token) return;
+    started.current = token;
+    if (!token) { setStatus("fail"); setMessage("This link is missing its verification code. Request a new link from the sign-in page."); return; }
+    async function verify() {
+      try {
+        const response = await fetch("/api/auth/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token }), signal: AbortSignal.timeout(15000) });
+        const result = await response.json().catch(() => null);
+        if (started.current !== token) return;
+        if (response.ok || result?.detail === "VERIFY_USER_ALREADY_VERIFIED") { setStatus("ok"); setMessage("Your email is verified. You can now sign in to ContractPros."); }
+        else { setStatus("fail"); setMessage("This link is invalid or has expired. If you’ve already verified your email, sign in. Otherwise, request a new link."); }
+      } catch { if (started.current === token) { setStatus("fail"); setMessage("We couldn’t connect. Refresh this page to try again."); } }
+    }
+    void verify();
   }, [token]);
-
-  return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-sm rounded-3xl border border-neutral-800 bg-neutral-950/70 p-6 text-white shadow-[0_0_40px_rgba(0,0,0,0.6)]">
-        <h1 className="text-xl font-semibold">Verify email</h1>
-        <p className="mt-2 text-sm text-neutral-400">
-          {status === "working" ? "Verifying…" : message}
-        </p>
-
-        <div className="mt-6">
-          <Link
-            href="/login"
-            className="inline-flex w-full items-center justify-center rounded-lg bg-purple-600 py-2 text-sm font-medium text-white hover:bg-purple-500"
-          >
-            Back to sign in
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
+  return <AuthShell><h2 className={styles.heading}>{status === "ok" ? "You’re ready to connect." : "Verify your email"}</h2><p role={status === "fail" ? "alert" : "status"} className={styles.intro}>{message}</p><Link href="/login" className={styles.primary} style={{ display: "block", textAlign: "center", textDecoration: "none" }}>Continue to sign in →</Link></AuthShell>;
 }
