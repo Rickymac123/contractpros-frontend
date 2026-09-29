@@ -48,7 +48,6 @@ export default function CompanyDashboardPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-8">
-      {/* Header */}
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -67,7 +66,6 @@ export default function CompanyDashboardPage() {
         </Link>
       </header>
 
-      {/* States */}
       {loading && (
         <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-6 py-10 text-center text-sm text-neutral-400">
           Loading dashboard…
@@ -83,14 +81,17 @@ export default function CompanyDashboardPage() {
 
       {!loading && !error && data && (
         <>
-          {/* Stats */}
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-4">
             <StatCard label="Active jobs" value={data.total_jobs} />
             <StatCard label="Applications" value={data.total_applications} />
             <StatCard label="Bookings" value={data.total_bookings} />
+            <StatCard
+              label="Booking requests sent"
+              value={0}
+              href="/dashboard/company/booking-requests"
+            />
           </div>
 
-          {/* Applications by status */}
           <div className="rounded-3xl border border-neutral-800/80 bg-gradient-to-b from-neutral-900/80 to-black/90 shadow-[0_0_40px_rgba(0,0,0,0.6)]">
             <div className="border-b border-neutral-800/80 px-6 py-4">
               <h2 className="text-sm font-medium text-neutral-200">
@@ -124,23 +125,70 @@ export default function CompanyDashboardPage() {
               )}
             </div>
           </div>
+
+          <div className="rounded-3xl border border-neutral-800/80 bg-neutral-950/60">
+            <div className="border-b border-neutral-800/80 px-6 py-4">
+              <h2 className="text-sm font-medium text-neutral-200">
+                Quick actions
+              </h2>
+            </div>
+
+            <div className="px-6 py-6 flex flex-wrap gap-2">
+              <Link
+                href="/dashboard/company/jobs"
+                className="rounded-xl border border-neutral-800 bg-neutral-950/40 px-4 py-2 text-xs text-neutral-200 transition hover:bg-neutral-900"
+              >
+                Manage jobs
+              </Link>
+
+              <Link
+                href="/dashboard/company/booking-requests"
+                className="rounded-xl border border-purple-500/30 bg-purple-950/20 px-4 py-2 text-xs text-purple-200 transition hover:bg-purple-900/30"
+              >
+                View booking requests
+              </Link>
+            </div>
+          </div>
         </>
       )}
     </div>
   );
 }
 
-/* ---------- helpers ---------- */
-
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-6 py-5 shadow-[0_0_25px_rgba(0,0,0,0.5)]">
+function StatCard({
+  label,
+  value,
+  href,
+}: {
+  label: string;
+  value: number;
+  href?: string;
+}) {
+  const content = (
+    <>
       <p className="text-xs uppercase tracking-wide text-neutral-400">
         {label}
       </p>
       <p className="mt-2 text-3xl font-semibold text-purple-300">
         {value}
       </p>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-6 py-5 shadow-[0_0_25px_rgba(0,0,0,0.5)] transition hover:border-neutral-700 hover:bg-neutral-900/70"
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-6 py-5 shadow-[0_0_25px_rgba(0,0,0,0.5)]">
+      {content}
     </div>
   );
 }

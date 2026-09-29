@@ -1,0 +1,78 @@
+// Run against an isolated backend with test email capture, never production.
+// PLAYWRIGHT_MODULE points to an installed Playwright package.
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const base = process.env.TEST_BASE_URL || 'http://127.0.0.1:3100';
+if (!base.startsWith('http://127.0.0.1:')) throw new Error('Local test server required');
+(async () => {
+  const browser = await chromium.launch({ headless: true, channel: 'chrome' });
+  const results = [];
+  const output = process.env.TEST_OUTPUT || '/tmp';
+  for (const role of ['professional', 'company', 'agency']) {
+    const context = await browser.newContext({ viewport: { width: role === 'agency' ? 390 : 1440, height: role === 'agency' ? 844 : 1050 } });
+    const page = await context.newPage();
+    const crashes = []; page.on('pageerror', e => crashes.push(e.message));
+    const email = `signup-${role}-${Date.now()}@example.com`;
+    await page.goto(`${base}/register/${role}`);
+    await page.getByRole('heading', { name: 'Let’s get you connected.' }).waitFor();
+    await page.getByText('Unavailable options are still being connected.', { exact: false }).waitFor();
+    assert.equal(await page.getByRole('button', { name: 'Continue with Google' }).isDisabled(), true);
+    await page.getByRole('button', { name: 'Continue →', exact: true }).click();
+    assert.equal(await page.getByRole('heading', { name: 'Let’s get you connected.' }).isVisible(), true, 'Required details block progression');
+    await page.getByLabel('First name', { exact: true }).fill('Test');
+    await page.getByLabel('Last name', { exact: true }).fill('Person');
+    await page.getByLabel('Email address', { exact: true }).fill(email);
+    await page.getByLabel('Password', { exact: true }).fill('Test-passphrase-2026');
+    await page.getByRole('button', { name: 'Show password', exact: true }).click();
+    assert.equal(await page.locator('#password').getAttribute('type'), 'text');
+    await page.getByRole('button', { name: 'Hide password', exact: true }).click();
+    await page.getByRole('button', { name: 'Continue →', exact: true }).click();
+    if (role === 'professional') await page.getByLabel('Job title / profession', { exact: true }).fill('Electrical Engineer');
+    else await page.getByLabel(role === 'agency' ? 'Agency name' : 'Company name', { exact: true }).fill('Test Business');
+    await page.getByLabel('Phone number', { exact: true }).fill('07000000000');
+    await page.getByLabel('Address line 1', { exact: true }).fill('1 Test Street');
+    await page.getByLabel('Town / city', { exact: true }).fill('Cardiff');
+    await page.getByLabel('Postcode', { exact: true }).fill('CF10 1AA');
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    await page.screenshot({ path: `${output}/signup-${role}-details.png`, fullPage: true });
+    const registered = page.waitForResponse(r => r.url().endsWith('/api/register'));
+    await page.getByRole('button', { name: 'Create account →', exact: true }).click();
+    assert.equal((await registered).status(), 201);
+    await page.getByRole('heading', { name: 'Check your inbox' }).waitFor();
+    await page.getByRole('link', { name: 'Continue to sign in →' }).click();
+    await page.getByLabel('Email address', { exact: true }).fill(email);
+    await page.getByLabel('Password', { exact: true }).fill('Test-passphrase-2026');
+    await page.getByRole('button', { name: 'Sign in →', exact: true }).click();
+    await page.getByRole('alert').filter({ hasText: 'Please verify your email' }).waitFor();
+    await page.getByRole('button', { name: 'Send another link' }).click();
+    await page.getByRole('status').filter({ hasText: 'we’ve requested a new email' }).waitFor();
+    const mail = JSON.parse(fs.readFileSync(process.env.TEST_MAIL_FILE || '/tmp/contractpros-signup-mail.json', 'utf8'));
+    assert.equal(mail.email, email);
+    await page.goto(`${base}/verify?token=${encodeURIComponent(mail.token)}`);
+    await page.getByText('Your email is verified.', { exact: false }).waitFor();
+    await page.getByRole('link', { name: 'Continue to sign in →' }).click();
+    await page.getByLabel('Email address', { exact: true }).fill(email);
+    await page.getByLabel('Password', { exact: true }).fill('Test-passphrase-2026');
+    await page.getByRole('button', { name: 'Sign in →', exact: true }).click();
+    try { await page.waitForURL(`**/dashboard/${role}`, {timeout:15000}); } catch (e) { await page.screenshot({path: `${output}/failure.png`,fullPage:true}); console.log(await page.locator('body').innerText()); throw e; }
+    const me = await context.request.get(`${base}/api/me`);
+    assert.equal(me.status(), 200); assert.equal((await me.json()).role, role);
+    const cookie = (await context.cookies()).find(c => c.name === 'backend_session');
+    assert.ok(cookie?.httpOnly);
+    assert.equal((await context.request.post(`${base}/api/logout`)).status(), 200);
+    assert.equal((await context.request.get(`${base}/api/me`)).status(), 401);
+    assert.equal(crashes.length, 0, crashes.join('\n'));
+    results.push({ role, registration: 'passed', verification: 'passed', resend: 'passed', login: 'passed', noHorizontalOverflow: true });
+    await context.close();
+  }
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await page.goto(`${base}/register`); await page.getByText('Unavailable options are still being connected.', { exact: false }).waitFor();
+  await page.screenshot({ path: `${output}/signup-mobile.png`, fullPage: true });
+  await page.goto(`${base}/login?error=SOCIAL_CANCELLED`);
+  await page.getByRole('alert').filter({ hasText: 'Sign-in was cancelled' }).waitFor();
+  await page.screenshot({ path: `${output}/login-mobile.png`, fullPage: true });
+  fs.writeFileSync(`${output}/browser-results.json`, JSON.stringify(results, null, 2));
+  console.log(JSON.stringify(results, null, 2));
+  await browser.close();
+})().catch(error => { console.error(error); process.exit(1); });

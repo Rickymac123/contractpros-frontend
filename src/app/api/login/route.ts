@@ -1,15 +1,43 @@
-// src/app/api/auth/login/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { API_BASE_URL } from "@/lib/config";
 
+function pickAuthCookieFromSetCookieHeader(setCookieHeader: string): string {
+  // Backend returns: "enginuity_auth=...; Path=/; HttpOnly; ..."
+  const parts = setCookieHeader.split(/,(?=\s*\w+=)/g); // split on cookie boundaries
+  for (const p of parts) {
+    const trimmed = p.trim();
+    if (trimmed.startsWith("enginuity_auth=")) {
+      return trimmed.split(";")[0]; // "enginuity_auth=..."
+    }
+  }
+  return "";
+}
+
+function getCookieOptions(req: NextRequest) {
+  const isHttps = req.nextUrl.protocol === "https:";
+  const host = req.headers.get("host") ?? "";
+
+  // Only set a fixed domain on your real production domain.
+  // If you set domain in dev (localhost / *.app.github.dev), the cookie won't be stored.
+  const isProdDomain =
+    host === "contractpros.co.uk" || host.endsWith(".contractpros.co.uk");
+
+  return {
+    httpOnly: true as const,
+    secure: isHttps, // allow http localhost
+    sameSite: "lax" as const,
+    path: "/" as const,
+    domain: isProdDomain ? ".contractpros.co.uk" : undefined,
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json().catch(() => null)) as {
-      email?: string;
-      password?: string;
-    } | null;
+    const body = (await req.json().catch(() => null)) as
+      | { email?: string; password?: string }
+      | null;
 
-    const email = body?.email ?? "";
+    const email = body?.email?.trim() ?? "";
     const password = body?.password ?? "";
 
     if (!email || !password) {
@@ -17,6 +45,7 @@ export async function POST(req: NextRequest) {
     }
 
     const form = new URLSearchParams();
+    form.set("grant_type", "password");
     form.set("username", email);
     form.set("password", password);
 
@@ -40,19 +69,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ detail }, { status: loginRes.status });
     }
 
-    const backendSetCookie = loginRes.headers.get("set-cookie") ?? "";
-    const cookiePair = backendSetCookie.split(";")[0]; // "enginuity_auth=..."
+    const rawSetCookie = loginRes.headers.get("set-cookie") ?? "";
+    const cookiePair = pickAuthCookieFromSetCookieHeader(rawSetCookie);
 
     if (!cookiePair) {
       return NextResponse.json({ detail: "NO_AUTH_COOKIE" }, { status: 500 });
     }
 
-    // Verify user
+    // Validate token works by calling /users/me using the backend cookie
     const meRes = await fetch(`${API_BASE_URL}/users/me`, {
-      headers: {
-        Cookie: cookiePair,
-        Accept: "application/json",
-      },
+      headers: { Cookie: cookiePair, Accept: "application/json" },
       cache: "no-store",
     });
 
@@ -63,27 +89,18 @@ export async function POST(req: NextRequest) {
 
     const user = meText ? JSON.parse(meText) : null;
 
+    const cookieOpts = getCookieOptions(req);
+
     if (user && user.is_verified === false) {
-      // ensure any existing cookie gets cleared in browser
       const res = NextResponse.json({ detail: "EMAIL_NOT_VERIFIED" }, { status: 403 });
-      res.cookies.set("backend_session", "", {
-        httpOnly: true,
-        secure: true,
-        sameSite: "lax",
-        path: "/",
-        maxAge: 0,
-      });
+      res.cookies.set("backend_session", "", { ...cookieOpts, maxAge: 0 });
       return res;
     }
 
-    // Store the backend cookie pair in a single httpOnly cookie for proxies to forward
     const res = NextResponse.json({ user }, { status: 200 });
-    res.cookies.set("backend_session", cookiePair, {
-      httpOnly: true,
-      secure: true, // codespaces is HTTPS
-      sameSite: "lax",
-      path: "/",
-    });
+
+    // Store the backend cookie pair (enginuity_auth=...) in a single httpOnly cookie
+    res.cookies.set("backend_session", cookiePair, cookieOpts);
 
     return res;
   } catch (error: any) {

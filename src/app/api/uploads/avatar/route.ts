@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_BASE_URL } from "@/lib/config";
 
+function getBackendCookie(req: NextRequest) {
+  const raw = req.cookies.get("backend_session")?.value ?? "";
+  // If stored URL-encoded (enginuity_auth%3D...), decode it
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
+
 export async function POST(req: NextRequest) {
-  const session = req.cookies.get("backend_session")?.value;
+  const session = getBackendCookie(req);
   if (!session) return NextResponse.json({ detail: "NOT_AUTHENTICATED" }, { status: 401 });
 
   const formData = await req.formData();
@@ -11,7 +21,6 @@ export async function POST(req: NextRequest) {
     method: "POST",
     headers: {
       Cookie: session,
-      // DO NOT set Content-Type here; fetch will set multipart boundary automatically
       Accept: "application/json",
     },
     body: formData,

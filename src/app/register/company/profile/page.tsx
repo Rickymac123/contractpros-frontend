@@ -11,7 +11,6 @@ type CompanyProfile = {
   location?: string | null;
 
   logo_url?: string | null;
-
   description?: string | null;
 };
 
@@ -55,8 +54,7 @@ export default function CompanyProfilePage() {
       setError(null);
       setInfo(null);
 
-      // Assumes you have this route already:
-      // GET /api/company/me  -> backend GET /company/me (or equivalent)
+      // GET /api/company/me  -> backend GET /companies/me
       const res = await fetch("/api/company/me", { cache: "no-store" });
       const text = await res.text();
 
@@ -105,7 +103,7 @@ export default function CompanyProfilePage() {
       const fd = new FormData();
       fd.append("file", file);
 
-      // Next route should proxy to backend: POST /uploads/company-logo
+      // POST /api/uploads/company-logo -> backend POST /uploads/company-logo
       const res = await fetch("/api/uploads/company-logo", {
         method: "POST",
         body: fd,
@@ -149,7 +147,7 @@ export default function CompanyProfilePage() {
         return;
       }
 
-      const payload: any = {
+      const payload = {
         name: name.trim(),
         website: website.trim() || null,
         postcode: postcode.trim(),
@@ -159,7 +157,7 @@ export default function CompanyProfilePage() {
       };
 
       if (!hasProfile) {
-        // Assumes: POST /api/company -> backend POST /company
+        // POST /api/company -> backend POST /companies/
         const res = await fetch("/api/company", {
           method: "POST",
           headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -175,7 +173,7 @@ export default function CompanyProfilePage() {
         return;
       }
 
-      // Assumes: PATCH /api/company/me -> backend PATCH /company/me
+      // PATCH /api/company/me -> backend PATCH /companies/me
       const res = await fetch("/api/company/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -277,7 +275,7 @@ export default function CompanyProfilePage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
-                  placeholder="e.g. Real Wrap Co"
+                  placeholder="e.g. Demo Company Ltd"
                 />
               </Field>
 
@@ -295,7 +293,7 @@ export default function CompanyProfilePage() {
                   value={postcode}
                   onChange={(e) => setPostcode(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
-                  placeholder="e.g. HP20 1AA"
+                  placeholder="e.g. LN1 1AA"
                 />
               </Field>
 
@@ -304,7 +302,7 @@ export default function CompanyProfilePage() {
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-white outline-none focus:border-purple-500"
-                  placeholder="e.g. Aylesbury"
+                  placeholder="e.g. Londn"
                 />
               </Field>
             </div>
