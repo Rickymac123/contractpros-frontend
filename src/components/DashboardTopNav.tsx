@@ -19,7 +19,7 @@ export default function DashboardTopNav({
   return (
     <div className={`mx-auto max-w-6xl px-4 ${className}`}>
       <nav className="mt-4 flex justify-center">
-        <div className="inline-flex items-center gap-2 rounded-2xl border border-neutral-800/80 bg-neutral-950/70 px-2 py-2 shadow-[0_0_40px_rgba(0,0,0,0.55)] backdrop-blur">
+        <div className="inline-flex max-w-full flex-wrap items-center gap-2 rounded-2xl border border-neutral-800/80 bg-neutral-950/70 px-2 py-2 shadow-[0_0_40px_rgba(0,0,0,0.55)] backdrop-blur">
           {items.map((item) => (
             <Link
               key={item.href}

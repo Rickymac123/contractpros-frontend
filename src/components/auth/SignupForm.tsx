@@ -84,6 +84,7 @@ export default function SignupForm({ initialRole = "professional" }: { initialRo
           <div className={styles.row}>{field("city", "Town / city", "address-level2")}{field("postcode", "Postcode", "postal-code")}</div>
           {field("country", "Country", "country-name")}
         </>}
+        {step === 2 && <p className={styles.hint}>By creating an account, you agree to our <Link href="/terms">terms of use</Link>. Read how we use your information in our <Link href="/privacy">privacy notice</Link>.</p>}
         <button className={styles.primary} disabled={busy} type="submit">{busy ? "Creating your account…" : step === 1 ? "Continue →" : "Create account →"}</button>
       </form>}
       <p className={styles.footnote}>{social ? "Your provider password is never shared with ContractPros." : "We’ll send you an email to verify your account."}</p>
