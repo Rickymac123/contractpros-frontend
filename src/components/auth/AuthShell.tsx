@@ -19,6 +19,6 @@ export default function AuthShell({ children }: { children: ReactNode }) {
       </div>
       <p className={styles.storyFooter}>Built around people. Made for possibility.</p>
     </aside>
-    <section className={styles.formSide}><div className={styles.formWrap}>{children}</div></section>
+    <section className={styles.formSide}><div className={styles.formWrap}>{children}<nav aria-label="Legal information" className={styles.footnote}><Link href="/privacy">Privacy</Link> · <Link href="/terms">Terms</Link> · <a href="mailto:info@contractpros.co.uk">Contact</a></nav></div></section>
   </main>;
 }

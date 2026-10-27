@@ -1,0 +1,3 @@
+import { Suspense } from "react";
+import PasswordRecovery from "@/components/auth/PasswordRecovery";
+export default function Page() { return <Suspense fallback={null}><PasswordRecovery reset={false} /></Suspense>; }

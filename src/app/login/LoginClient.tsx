@@ -51,6 +51,7 @@ export default function LoginClient() {
       <label className={styles.field} htmlFor="password">Password<div className={styles.password}><input className={styles.input} id="password" aria-label="Password" autoComplete="current-password" type={show ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)} /><button className={styles.show} type="button" onClick={() => setShow(!show)} aria-label={show ? "Hide password" : "Show password"}>{show ? "Hide" : "Show"}</button></div></label>
       <button className={styles.primary} disabled={busy} type="submit">{busy ? "Signing in…" : "Sign in →"}</button>
     </form>
+    <p className={styles.footnote}><Link href="/forgot-password">Forgot your password?</Link></p>
     <p className={styles.footnote}>Still waiting for your verification email? <button type="button" className={styles.link} disabled={resending} onClick={resend}>{resending ? "Requesting…" : "Send another link"}</button></p>
   </AuthShell>;
 }
