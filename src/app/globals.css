@@ -29,3 +29,6 @@ body :is(button,a)[class~="bg-purple-600/80"]{background:#692b9e;color:white}.cp
 /* Replace legacy dashboard dark gradients with readable light surfaces. */
 .cp-content [class*="bg-gradient"][class*="from-neutral-900"]{background:#fff}
 .cp-content [class*="bg-gradient"][class*="from-purple-900"]{background:linear-gradient(100deg,#eee5f7,#fff)}
+
+body [class~="text-purple-50"]{color:#7136a0}
+body :is(button,a)[class~="bg-purple-700/30"],body :is(button,a)[class~="bg-purple-700/50"],body :is(button,a)[class~="bg-purple-700/60"],body :is(button,a)[class~="bg-purple-600/40"]{background:#692b9e;color:#fff}
