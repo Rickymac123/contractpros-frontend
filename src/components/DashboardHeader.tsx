@@ -1,9 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 type Me = {
   id?: string;
@@ -38,6 +37,9 @@ function extractDetail(text: string, status: number) {
 
 export default function DashboardHeader() {
   const router = useRouter();
+  const pathname = usePathname();
+  const section = pathname.split("/")[3] || "overview";
+  const sectionLabel: Record<string,string> = {"booking-requests":"Booking requests", "availability":"Availability", "jobs":"Jobs", "profile":"My profile", "preview":"Public profile", "applications":"Applications", "users":"Users", "talent":"Talent", "qualifications":"Qualifications", "bookings":"Bookings", "overview":"Overview"};
   const [me, setMe] = useState<Me | null>(null);
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -113,7 +115,7 @@ export default function DashboardHeader() {
           className="flex items-center gap-3 text-left"
           title="Go to dashboard"
         >
-          <span className="text-sm text-neutral-500 capitalize">{me?.role || "Workspace"} / Overview</span>
+          <span className="text-sm text-neutral-500 capitalize">{me?.role || "Workspace"} / {sectionLabel[section] || "Account"}</span>
         </button>
 
         {/* Right: user + avatar dropdown */}
