@@ -319,13 +319,13 @@ export default function ProfessionalProfilePage() {
       setLastName((data?.last_name ?? "") as string);
 
       const cat = normaliseIncomingToDropdown(
-        data?.profession_category ?? "Engineering",
+        data?.profession_category ?? "",
         PROFESSION_CATEGORY_OPTIONS,
       );
-      setProfessionCategory(cat.value || "Engineering");
+      setProfessionCategory(PROFESSION_CATEGORY_OPTIONS.some(o => o.value === cat.value) ? cat.value : "");
 
-      const prof = normaliseIncomingToDropdown(data?.profession ?? "Engineer", PROFESSION_OPTIONS);
-      setProfession(prof.value || "Engineer");
+      const prof = normaliseIncomingToDropdown(data?.profession ?? "", PROFESSION_OPTIONS);
+      setProfession(PROFESSION_OPTIONS.some(o => o.value === prof.value) ? prof.value : "");
 
       const disc = normaliseIncomingToDropdown(
         data?.engineering_discipline ?? "",
@@ -833,6 +833,7 @@ export default function ProfessionalProfilePage() {
                   onChange={(e) => setProfessionCategory(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-neutral-200 outline-none focus:border-purple-500"
                 >
+                  <option value="">Select your profession category</option>
                   {PROFESSION_CATEGORY_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
                       {o.label}
@@ -847,6 +848,7 @@ export default function ProfessionalProfilePage() {
                   onChange={(e) => setProfession(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-neutral-800 bg-neutral-950/60 px-3 py-2 text-sm text-neutral-200 outline-none focus:border-purple-500"
                 >
+                  <option value="">Select your profession</option>
                   {PROFESSION_OPTIONS.map((o) => (
                     <option key={o.value} value={o.value}>
                       {o.label}
