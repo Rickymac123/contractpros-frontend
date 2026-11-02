@@ -582,27 +582,27 @@ export default function ProfessionalAvailabilityPage() {
             <style jsx>{`
               /* Base */
               .cp-calendar :global(.fc) {
-                color: #e5e7eb;
-                font-size: 12px;
+                color: #302b39;
+                font-size: 13px;
               }
 
               /* Toolbar */
               .cp-calendar :global(.fc .fc-toolbar-title) {
-                font-size: 14px;
+                font-size: 18px;
                 font-weight: 600;
-                color: #f5f3ff;
+                color: #302b39;
               }
               .cp-calendar :global(.fc .fc-button) {
                 border-radius: 12px;
-                border: 1px solid rgba(147, 51, 234, 0.35);
-                background: rgba(88, 28, 135, 0.25);
-                color: #f5f3ff;
+                border: 1px solid #692b9e;
+                background: #692b9e;
+                color: #ffffff;
                 padding: 8px 10px;
-                font-size: 12px;
+                font-size: 13px;
               }
               .cp-calendar :global(.fc .fc-button:hover) {
-                border-color: rgba(168, 85, 247, 0.6);
-                background: rgba(126, 34, 206, 0.28);
+                border-color: #54217e;
+                background: #54217e;
               }
               .cp-calendar :global(.fc .fc-button:disabled) {
                 opacity: 0.55;
@@ -610,17 +610,17 @@ export default function ProfessionalAvailabilityPage() {
 
               /* Grid borders + background */
               .cp-calendar :global(.fc-theme-standard .fc-scrollgrid) {
-                border-color: rgba(38, 38, 38, 0.8);
-                background: rgba(10, 10, 10, 0.25);
+                border-color: #d9d2e2;
+                background: #ffffff;
               }
               .cp-calendar :global(.fc-theme-standard td),
               .cp-calendar :global(.fc-theme-standard th) {
-                border-color: rgba(38, 38, 38, 0.8);
+                border-color: #d9d2e2;
               }
 
               /* Month view cells */
               .cp-calendar :global(.fc .fc-daygrid-day-frame) {
-                background: rgba(0, 0, 0, 0.18);
+                background: transparent;
               }
               .cp-calendar :global(.fc .fc-daygrid-day:hover .fc-daygrid-day-frame) {
                 background: rgba(147, 51, 234, 0.08);
@@ -628,27 +628,27 @@ export default function ProfessionalAvailabilityPage() {
 
               /* Day numbers */
               .cp-calendar :global(.fc .fc-daygrid-day-number) {
-                color: #cbd5e1;
+                color: #302b39;
                 font-weight: 600;
                 padding: 8px;
               }
 
               /* Today highlight */
               .cp-calendar :global(.fc .fc-day-today) {
-                background: rgba(147, 51, 234, 0.10) !important;
+                background: #eee5f7 !important;
               }
               .cp-calendar :global(.fc .fc-day-today .fc-daygrid-day-number) {
-                color: #f5f3ff;
+                color: #302b39;
               }
 
               /* Header row */
               .cp-calendar :global(.fc .fc-col-header-cell-cushion) {
                 padding: 10px 8px;
-                color: #a3a3a3;
+                color: #62576f;
                 font-weight: 600;
                 text-transform: uppercase;
                 letter-spacing: 0.08em;
-                font-size: 10px;
+                font-size: 12px;
               }
 
               /* TimeGrid */
@@ -656,11 +656,11 @@ export default function ProfessionalAvailabilityPage() {
                 height: 38px;
               }
               .cp-calendar :global(.fc .fc-timegrid-axis-cushion) {
-                color: #737373;
+                color: #62576f;
                 font-size: 11px;
               }
               .cp-calendar :global(.fc .fc-timegrid-divider) {
-                border-color: rgba(38, 38, 38, 0.8);
+                border-color: #d9d2e2;
               }
 
               /* Events */
@@ -671,22 +671,30 @@ export default function ProfessionalAvailabilityPage() {
                 cursor: pointer;
               }
               .cp-calendar :global(.cp-event-busy) {
-                background: rgba(147, 51, 234, 0.35);
-                border-color: rgba(168, 85, 247, 0.6);
+                background: #692b9e;
+                border-color: #54217e;
               }
               .cp-calendar :global(.cp-event-available) {
-                background: rgba(16, 185, 129, 0.18);
-                border-color: rgba(16, 185, 129, 0.35);
+                background: #24664b;
+                border-color: #24664b;
               }
 
               /* Event text contrast */
               .cp-calendar :global(.fc .fc-event-title),
               .cp-calendar :global(.fc .fc-event-time) {
-                color: #f5f3ff;
+                color: #ffffff;
                 font-weight: 600;
               }
               .cp-calendar :global(.fc .fc-event) {
-                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+                box-shadow: 0 2px 5px rgba(41, 28, 63, 0.08);
+              }
+              .cp-calendar :global(.fc .fc-day-other) { opacity: 1; background: #f7f5f9; }
+              .cp-calendar :global(.fc .fc-day-other .fc-daygrid-day-top) { opacity: 1; }
+              .cp-calendar :global(.fc .fc-day-other .fc-daygrid-day-number) { opacity: 1; color: #71697d; }
+              .cp-calendar :global(.fc .fc-button-active) { background: #43265b; color: white; }
+              @media (max-width: 600px) {
+                .cp-calendar :global(.fc .fc-toolbar) { flex-wrap: wrap; gap: 12px; }
+                .cp-calendar :global(.fc .fc-toolbar-title) { font-size: 17px; }
               }
             `}</style>
           </div>
