@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import CancelConfirmedBooking from "@/components/CancelConfirmedBooking";
 
 type BookingRequestItem = {
   id: number;
@@ -289,6 +290,7 @@ export default function ProfessionalBookingRequestsPage() {
 
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusPill status={item.status} />
+                    {item.status === "accepted" && <CancelConfirmedBooking requestId={item.id} onCancelled={() => load()} />}
                     {isPending && <TimeRemainingPill label={remaining.label} expired={remaining.expired} />}
                   </div>
                 </div>
