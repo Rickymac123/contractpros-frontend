@@ -283,7 +283,7 @@ export default function ProfessionalBookingRequestsPage() {
 
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusPill status={item.status} />
-                    <TimeRemainingPill label={remaining.label} expired={remaining.expired} />
+                    {isPending && <TimeRemainingPill label={remaining.label} expired={remaining.expired} />}
                   </div>
                 </div>
 

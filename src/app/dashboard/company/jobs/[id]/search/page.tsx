@@ -231,7 +231,7 @@ export default function CompanyJobMatchesPage() {
 
           <div className="p-6 space-y-4">
             <p className="text-sm text-neutral-400">
-              No professionals currently match this job strongly enough. Post the job to the marketplace so professionals can review it and apply.
+              No professionals currently match this job strongly enough. Your active job is already available in the marketplace, where professionals can review it and apply.
             </p>
 
             <div className="flex flex-wrap gap-2">

@@ -13,6 +13,7 @@ export default function CompanyLayout({ children }: { children: ReactNode }) {
           items={[
             { href: "/dashboard/company", label: "Dashboard" },
             { href: "/dashboard/company/jobs", label: "Jobs" },
+            { href: "/dashboard/company/booking-requests", label: "Booking requests" },
             { href: "/dashboard/company/jobs/archived", label: "Archived" },
           ]}
         />

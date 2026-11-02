@@ -15,6 +15,7 @@ export default function AgencyLayout({ children }: { children: ReactNode }) {
             { href: "/dashboard/agency", label: "Dashboard" },
             { href: "/dashboard/agency/talent", label: "Talent" },
             { href: "/dashboard/agency/applications", label: "Applications" },
+            { href: "/dashboard/agency/booking-requests", label: "Booking requests" },
           ]}
         />
 
