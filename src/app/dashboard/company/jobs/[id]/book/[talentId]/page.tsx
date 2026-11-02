@@ -17,7 +17,8 @@ export default function DirectBookingPage() {
    try {
     const [jr,tr] = await Promise.all([fetch(`/api/company/jobs/${params.id}`,{cache:'no-store'}),fetch(`/api/company/talent/${params.talentId}/profile`,{cache:'no-store'})]);
     if(!jr.ok||!tr.ok) throw new Error('Unable to load the job or professional. Return to the job and try again.');
-    const job=await jr.json();const talent=(await tr.json()).profile;
+    const job=(await jr.json()).job;const talent=(await tr.json()).profile;
+    if(!job?.title || !talent) throw new Error("The job or professional details are incomplete. Return to the job and try again.");
     if(job.is_archived) throw new Error(errors.JOB_CLOSED);
     if(cancelled)return;
     setTitle(job.title);setName([talent.first_name,talent.last_name].filter(Boolean).join(' '));
