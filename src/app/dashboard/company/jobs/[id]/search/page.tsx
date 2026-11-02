@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
+import { filterMatches, emptyMatchFilters, type MatchFilters } from "@/lib/match-filters";
+
 type MatchItem = {
+  talent_skills?: string | null;
   talent_id: number;
   score: number;
   match_reasons?: string[];
@@ -97,6 +100,8 @@ export default function CompanyJobMatchesPage() {
 
   const jobId = typeof params?.id === "string" ? params.id : undefined;
 
+  const [filters, setFilters] = useState<MatchFilters>({...emptyMatchFilters});
+  const setFilter = (key: keyof MatchFilters, value: string | boolean) => setFilters(previous => ({...previous, [key]: value}));
   const [items, setItems] = useState<MatchItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -146,8 +151,8 @@ export default function CompanyJobMatchesPage() {
   }, [jobId]);
 
   const sortedItems = useMemo(() => {
-    return [...items].sort((a, b) => b.score - a.score);
-  }, [items]);
+    return filterMatches(items, filters);
+  }, [items, filters]);
 
   const topMatches = useMemo(() => {
     return sortedItems.filter((item) => item.score >= 75);
@@ -177,7 +182,7 @@ export default function CompanyJobMatchesPage() {
             Search professionals
           </h1>
           <p className="mt-1 text-sm text-neutral-400">
-            Review structured talent matches grouped by match strength.
+            Search and filter the professionals who meet this job’s core requirements and recorded availability.
           </p>
         </div>
 
@@ -200,6 +205,22 @@ export default function CompanyJobMatchesPage() {
           </button>
         </div>
       </header>
+
+      {!loading && !error && <section aria-label="Filter professionals" className="rounded-2xl border border-neutral-800 bg-neutral-950/60 p-5 space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <label className="text-sm">Name, profession or skills<input className="mt-1 block w-full rounded-lg border border-neutral-700 bg-neutral-900 p-2" value={filters.query} onChange={e=>setFilter('query',e.target.value)} /></label>
+          <label className="text-sm">Town or postcode<input className="mt-1 block w-full rounded-lg border border-neutral-700 bg-neutral-900 p-2" value={filters.location} onChange={e=>setFilter('location',e.target.value)} /></label>
+          <label className="text-sm">Industry<select className="mt-1 block w-full rounded-lg border border-neutral-700 bg-neutral-900 p-2" value={filters.industry} onChange={e=>setFilter('industry',e.target.value)}><option value="">All industries</option>{Array.from(new Set(items.map(i=>i.talent_industry?.trim().toLowerCase()).filter((v): v is string=>!!v))).sort().map(v=><option key={v}>{v}</option>)}</select></label>
+          <label className="text-sm">Minimum experience<select className="mt-1 block w-full rounded-lg border border-neutral-700 bg-neutral-900 p-2" value={filters.experience} onChange={e=>setFilter('experience',e.target.value)}><option value="">Any experience</option>{['junior','mid-level','senior','lead','manager'].map(v=><option key={v}>{v}</option>)}</select></label>
+          <label className="text-sm">IR35 preference<select className="mt-1 block w-full rounded-lg border border-neutral-700 bg-neutral-900 p-2" value={filters.ir35} onChange={e=>setFilter('ir35',e.target.value)}><option value="">Any preference</option><option value="inside">Inside or either</option><option value="outside">Outside or either</option></select></label>
+          <label className="text-sm">Minimum criteria match<select className="mt-1 block w-full rounded-lg border border-neutral-700 bg-neutral-900 p-2" value={filters.minScore} onChange={e=>setFilter('minScore',e.target.value)}>{['0','25','50','75'].map(v=><option key={v} value={v}>{v}%</option>)}</select></label>
+          <label className="text-sm">Rate basis<select className="mt-1 block w-full rounded-lg border border-neutral-700 bg-neutral-900 p-2" value={filters.rateType} onChange={e=>setFilter('rateType',e.target.value)}><option value="day">Per day</option><option value="hour">Per hour</option></select></label>
+          <label className="text-sm">Maximum rate in GBP<input type="number" min="0" step="0.01" className="mt-1 block w-full rounded-lg border border-neutral-700 bg-neutral-900 p-2" value={filters.maxRate} onChange={e=>setFilter('maxRate',e.target.value)} /></label>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={filters.cvOnly} onChange={e=>setFilter('cvOnly',e.target.checked)} />CV uploaded only</label>
+        </div>
+        <div className="flex flex-wrap justify-between gap-3"><p role="status" className="text-sm text-neutral-300">Showing {sortedItems.length} of {items.length} eligible professionals</p><button onClick={()=>setFilters({...emptyMatchFilters})} className="rounded-lg border border-neutral-700 px-3 py-2 text-sm">Clear filters</button></div>
+        <p className="text-xs text-neutral-400">The percentage measures supplied job criteria, not a hiring recommendation. Missing information earns no match. Qualifications are profile claims unless marked verified. Location is a text match; travel distance is not calculated. Confirm suitability and availability before agreeing work.</p>
+      </section>}
 
       {!loading && !error && (
         <div className="grid gap-4 md:grid-cols-3">
@@ -225,13 +246,13 @@ export default function CompanyJobMatchesPage() {
         <div className="overflow-hidden rounded-3xl border border-neutral-800/80 bg-neutral-950/60 shadow-[0_0_40px_rgba(0,0,0,0.45)]">
           <div className="border-b border-neutral-800/70 px-6 py-4">
             <h2 className="text-sm font-medium text-neutral-200">
-              No suitable matches found
+              No professionals match these filters
             </h2>
           </div>
 
           <div className="p-6 space-y-4">
             <p className="text-sm text-neutral-400">
-              No professionals currently match this job strongly enough. Your active job is already available in the marketplace, where professionals can review it and apply.
+              Clear the filters to broaden the results, or review the job requirements. Your active job is already available in the marketplace for applications.
             </p>
 
             <div className="flex flex-wrap gap-2">
@@ -304,7 +325,7 @@ export default function CompanyJobMatchesPage() {
 
             <div className="p-6 space-y-4">
               <p className="text-sm text-neutral-400">
-                You can still post this job to the marketplace and allow professionals to apply directly.
+                Your active job is already available in the marketplace, where professionals can apply directly.
               </p>
 
               <div className="flex flex-wrap gap-2">
@@ -516,7 +537,7 @@ function MatchCard({
 
           <button
             type="button"
-            onClick={() => router.push(`/dashboard/company/jobs/${jobId}`)}
+            onClick={() => router.push(`/dashboard/company/jobs/${jobId}/book/${item.talent_id}`)}
             className="rounded-xl border border-purple-500/70 bg-purple-700/30 px-4 py-2 text-xs font-medium text-purple-50 transition hover:border-purple-400 hover:bg-purple-600/40"
           >
             Request to book
