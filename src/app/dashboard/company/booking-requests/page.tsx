@@ -153,7 +153,7 @@ export default function CompanyBookingRequestsPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-white">Sent booking requests</h1>
           <p className="mt-1 text-sm text-neutral-400">
-            Track outstanding, accepted, declined and expired booking requests.
+            Track outstanding, accepted, completed, declined and expired booking requests.
           </p>
         </div>
 
@@ -225,6 +225,7 @@ export default function CompanyBookingRequestsPage() {
 
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusPill status={item.status} />
+                    {["accepted", "completed"].includes(item.status) && <Link className="rounded-lg border border-purple-600 px-3 py-2 text-sm text-purple-200" href={`/dashboard/company/booking-requests/${item.id}/review`}>{item.status === "completed" ? "Leave / view review" : "Complete booking"}</Link>}
                     {item.status === "accepted" && <CancelConfirmedBooking requestId={item.id} onCancelled={() => load()} />}
                     {item.status === "pending" && <button disabled={cancelling !== null} onClick={() => void cancelRequest(item.id)} className="rounded-lg border border-neutral-600 px-3 py-2 text-sm disabled:opacity-50">{cancelling === item.id ? "Cancelling…" : "Cancel request"}</button>}
                     {item.status === "accepted" && <a className="text-sm text-purple-300 underline" href="mailto:info@contractpros.co.uk">Need to change this booking? Contact support</a>}
