@@ -9,7 +9,7 @@ import Link from "next/link";
 type AdminUser = {
   id: string;
   email: string;
-  role?: string | null; // "company" | "agency" | "admin"
+  role?: string | null; // "professional" | "company" | "agency" | "admin"
   is_active?: boolean;
   is_superuser?: boolean;
   is_verified?: boolean;
@@ -47,7 +47,7 @@ export default function AdminEditUserPage() {
   const [ok, setOk] = useState<string | null>(null);
 
   // Editable fields
-  const [role, setRole] = useState<"company" | "agency" | "admin">("company");
+  const [role, setRole] = useState<string>("");
   const [isActive, setIsActive] = useState(true);
 
   // Email editing
@@ -70,12 +70,7 @@ export default function AdminEditUserPage() {
       const data = text ? (JSON.parse(text) as AdminUser) : null;
       setUser(data);
 
-      const initialRole =
-        (data?.role as any) === "agency" || (data?.role as any) === "admin"
-          ? (data?.role as any)
-          : "company";
-
-      setRole(initialRole);
+      setRole(data?.role ?? "");
       setIsActive(data?.is_active ?? true);
 
       setEmail(data?.email ?? "");
@@ -164,7 +159,13 @@ export default function AdminEditUserPage() {
         }
       }
 
-      const payload: Record<string, unknown> = { role };
+      const payload: Record<string, unknown> = {};
+      if (role !== user?.role) {
+        if (!["professional", "company", "agency", "admin"].includes(role)) {
+          throw new Error("Please select a valid role.");
+        }
+        payload.role = role;
+      }
 
       if (emailChanged) payload.email = emailTrimmed;
 
@@ -259,9 +260,13 @@ export default function AdminEditUserPage() {
                 </label>
                 <select
                   value={role}
-                  onChange={(e) => setRole(e.target.value as any)}
+                  onChange={(e) => setRole(e.target.value)}
                   className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm outline-none focus:border-purple-500"
                 >
+                  {!["professional", "company", "agency", "admin"].includes(role) && (
+                    <option value={role} disabled>{role || "Select role"}</option>
+                  )}
+                  <option value="professional">professional</option>
                   <option value="company">company</option>
                   <option value="agency">agency</option>
                   <option value="admin">admin</option>
