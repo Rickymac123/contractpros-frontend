@@ -54,6 +54,8 @@ function getInitialStatusFromUrl(): StatusFilter {
 }
 
 export default function ProfessionalApplicationsPage() {
+  const [withdrawing, setWithdrawing] = useState<number | null>(null);
+  const [notice, setNotice] = useState("");
   const [apps, setApps] = useState<ProfessionalApplicationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,6 +91,18 @@ export default function ProfessionalApplicationsPage() {
     setStatus(getInitialStatusFromUrl());
     load();
   }, []);
+
+  async function withdraw(id: number) {
+    setWithdrawing(id); setError(null); setNotice("");
+    try {
+      const response = await fetch(`/api/applications/${id}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "withdrawn" }),
+      });
+      if (!response.ok) throw new Error("Unable to withdraw this application. Refresh and try again.");
+      await load(); setNotice("Application withdrawn.");
+    } catch (e) { setError(e instanceof Error ? e.message : "Unable to withdraw application."); }
+    finally { setWithdrawing(null); }
+  }
 
   const filtered = useMemo(() => {
     const q = norm(query);
@@ -217,6 +231,7 @@ export default function ProfessionalApplicationsPage() {
         </div>
       </div>
 
+      {notice && <p role="status" className="text-emerald-300">{notice}</p>}
       {loading && (
         <div className="rounded-2xl border border-neutral-800 bg-neutral-950/70 px-6 py-10 text-center text-sm text-neutral-400">
           Loading…
@@ -273,6 +288,7 @@ export default function ProfessionalApplicationsPage() {
                   <div className="text-right text-xs text-neutral-500">
                     <div>App #{a.application_id}</div>
                     <div>Job #{a.jobpost_id}</div>
+                    {["pending", "shortlisted"].includes(norm(a.status)) && <button disabled={withdrawing !== null} onClick={() => void withdraw(a.application_id)} className="mt-3 rounded-lg border border-neutral-600 px-3 py-2 text-neutral-200 disabled:opacity-50">{withdrawing === a.application_id ? "Withdrawing…" : "Withdraw application"}</button>}
                   </div>
                 </div>
               </div>

@@ -88,6 +88,7 @@ function getTimeRemaining(expiresAt?: string | null) {
 }
 
 export default function CompanyBookingRequestsPage() {
+  const [cancelling, setCancelling] = useState<number | null>(null);
   const [items, setItems] = useState<BookingRequestItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -126,6 +127,16 @@ export default function CompanyBookingRequestsPage() {
   useEffect(() => {
     load();
   }, []);
+
+  async function cancelRequest(id: number) {
+    setCancelling(id); setError(null);
+    try {
+      const response = await fetch(`/api/company/booking-requests/${id}/cancel`, { method: "POST" });
+      if (!response.ok) throw new Error("The request could not be cancelled. Refresh to check its latest status.");
+      await load();
+    } catch (e) { setError(e instanceof Error ? e.message : "Unable to cancel request."); }
+    finally { setCancelling(null); }
+  }
 
   const counts = useMemo(() => {
     const pending = items.filter((i) => i.status?.toLowerCase() === "pending").length;
@@ -213,6 +224,8 @@ export default function CompanyBookingRequestsPage() {
 
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusPill status={item.status} />
+                    {item.status === "pending" && <button disabled={cancelling !== null} onClick={() => void cancelRequest(item.id)} className="rounded-lg border border-neutral-600 px-3 py-2 text-sm disabled:opacity-50">{cancelling === item.id ? "Cancelling…" : "Cancel request"}</button>}
+                    {item.status === "accepted" && <a className="text-sm text-purple-300 underline" href="mailto:info@contractpros.co.uk">Need to change this booking? Contact support</a>}
                     {(item.status || "").toLowerCase() === "pending" && (
                       <TimeRemainingPill label={remaining.label} expired={remaining.expired} />
                     )}

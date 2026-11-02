@@ -57,7 +57,11 @@ export async function GET(req: NextRequest) {
     }
 
     const data = text ? JSON.parse(text) : id ? null : [];
-    return NextResponse.json(data, { status: 200 });
+    const display = (person: Record<string, unknown>) => ({ ...person,
+      full_name: [person.first_name, person.last_name].filter(Boolean).join(" "),
+      profile_image_url: person.avatar_url,
+    });
+    return NextResponse.json(Array.isArray(data) ? data.map(display) : data ? display(data) : null, { status: 200 });
   } catch (err: any) {
     return NextResponse.json(
       {
@@ -198,5 +202,27 @@ export async function DELETE(req: NextRequest) {
       },
       { status: 500 },
     );
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  const session = getSessionCookie(req);
+  if (!session) return NextResponse.json({ detail: "NOT_AUTHENTICATED" }, { status: 401 });
+  const id = req.nextUrl.searchParams.get("id");
+  if (!id || !/^\d+$/.test(id)) return NextResponse.json({ detail: "Invalid professional" }, { status: 400 });
+  try {
+    const body = await req.json();
+    if (typeof body.full_name === "string") {
+      const [first, ...rest] = body.full_name.trim().split(/\s+/);
+      if (!first || !rest.length) return NextResponse.json({ detail: "Please enter first and last name." }, { status: 422 });
+      body.first_name = first; body.last_name = rest.join(" "); delete body.full_name;
+    }
+    if ("profile_image_url" in body) { body.avatar_url = body.profile_image_url; delete body.profile_image_url; }
+    const response = await fetch(`${API_BASE_URL}/talent/${id}`, {
+      method: "PATCH", headers: { Cookie: session, "Content-Type": "application/json" }, body: JSON.stringify(body),
+    });
+    return new NextResponse(await response.text(), { status: response.status, headers: { "Content-Type": "application/json" } });
+  } catch {
+    return NextResponse.json({ detail: "Unable to save this profile. Please retry." }, { status: 502 });
   }
 }

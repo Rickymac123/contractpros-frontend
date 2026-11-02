@@ -166,6 +166,18 @@ function VerifiedTick() {
 }
 
 export default function ProfessionalPreviewPage() {
+  const [inviteUrl, setInviteUrl] = useState("");
+  const [inviteBusy, setInviteBusy] = useState(false);
+  const [inviteError, setInviteError] = useState("");
+  async function createInvite() {
+    setInviteBusy(true); setInviteError("");
+    try {
+      const response = await fetch("/api/professional/review-invites", { method: "POST" });
+      if (!response.ok) throw new Error("Unable to create a review link. Please try again.");
+      const invite = await response.json(); setInviteUrl(invite.invite_url);
+    } catch (e) { setInviteError(e instanceof Error ? e.message : "Unable to create review link."); }
+    finally { setInviteBusy(false); }
+  }
   const [data, setData] = useState<PreviewResponse | null>(null);
   const [qualifications, setQualifications] = useState<Qualification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -404,6 +416,13 @@ export default function ProfessionalPreviewPage() {
             </div>
           </div>
 
+          <section className="space-y-3 rounded-2xl border border-neutral-800 bg-neutral-950/60 p-5">
+            <h2 className="font-semibold">Request a client review</h2>
+            <p className="text-sm text-neutral-400">Create a link and share it with a client you have worked with. Each link accepts one review and expires after 14 days. The client confirms their review by email.</p>
+            <button disabled={inviteBusy} onClick={() => void createInvite()} className="rounded-lg bg-purple-600 px-4 py-2 disabled:opacity-50">{inviteBusy ? "Creating link…" : "Create review link"}</button>
+            {inviteError && <p role="alert" className="text-red-300">{inviteError}</p>}
+            {inviteUrl && <label className="block text-sm">Review link — copy and share with your client<input readOnly value={inviteUrl} onFocus={e => e.target.select()} className="mt-2 block w-full rounded-lg border border-neutral-700 bg-black p-3" /></label>}
+          </section>
           {/* Reviews */}
           <div className="rounded-3xl border border-neutral-800/80 bg-neutral-950/60 shadow-[0_0_40px_rgba(0,0,0,0.55)] overflow-hidden">
             <div className="border-b border-neutral-800/80 px-6 py-4 flex items-center justify-between">

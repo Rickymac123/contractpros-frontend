@@ -11,6 +11,7 @@ const talentSchema = z
     last_name: z.string().min(1, "Last name is required"),
 
     profession: z.string().min(2, "Profession is required"),
+    role_title: z.string().trim().min(2, "Job title is required"),
     location: z.string().optional().or(z.literal("")).nullable(),
     postcode: z.string().min(2, "Postcode is required"),
     work_radius_miles: z.coerce.number().nonnegative("Work radius must be positive").nullable().optional(),
@@ -80,6 +81,7 @@ export default function NewTalentPage() {
       first_name: "",
       last_name: "",
       profession: "Engineering",
+      role_title: "Engineer",
       location: "",
       postcode: "",
       work_radius_miles: 50,
@@ -101,8 +103,9 @@ export default function NewTalentPage() {
     const payload = {
       first_name: values.first_name.trim(),
       last_name: values.last_name.trim(),
-      profession: values.profession,
-      location: values.location?.trim() ? values.location.trim() : null,
+      profession_category: values.profession.toLowerCase(),
+      profession: values.role_title.trim(),
+      location: values.location?.trim() || values.postcode.trim(),
       postcode: values.postcode.trim(),
       work_radius_miles: values.work_radius_miles ?? null,
 
@@ -210,6 +213,10 @@ export default function NewTalentPage() {
               {errors.profession && <p className="text-xs text-red-300">{errors.profession.message}</p>}
             </div>
 
+            <label className="space-y-1.5 text-sm">Job title
+              <input {...register("role_title")} className="block w-full rounded-xl border border-neutral-700 bg-neutral-950 px-3 py-2" />
+              {errors.role_title && <span className="text-red-300">{errors.role_title.message}</span>}
+            </label>
             {/* Engineering discipline (conditional) */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">

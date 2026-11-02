@@ -18,6 +18,7 @@ type AvailabilityEvent = {
   notes?: string | null;
   series_id?: string | null;
   rrule?: string | null;
+  readonly?: boolean;
   exdates?: string | null;
 };
 
@@ -144,6 +145,7 @@ export default function ProfessionalAvailabilityPage() {
       if (!a.rrule) {
         return {
           id: String(a.id),
+          editable: !a.readonly,
           title,
           start: a.start_at,
           end: a.end_at,
@@ -233,6 +235,7 @@ export default function ProfessionalAvailabilityPage() {
   };
 
   const openEditModal = (ev: AvailabilityEvent) => {
+    if (ev.readonly) { setInfo("Confirmed booking. Contact the company to discuss changes."); return; }
     setModalMode("edit");
     setEditingId(ev.id);
 
@@ -269,7 +272,20 @@ export default function ProfessionalAvailabilityPage() {
       }
 
       const data = text ? JSON.parse(text) : [];
-      setItems(Array.isArray(data) ? data : []);
+      const bookingsResponse = await fetch("/api/bookings", {cache:"no-store"});
+      if (!bookingsResponse.ok) throw new Error("Bookings could not be loaded. Please refresh the calendar.");
+      const bookings = await bookingsResponse.json();
+      const booked: AvailabilityEvent[] = [];
+      for (const booking of bookings) {
+        if (booking.status === "cancelled") continue;
+        const day = new Date(`${booking.start_date}T12:00:00`);
+        const last = new Date(`${booking.end_date}T12:00:00`);
+        for(let n=0; day<=last && n<367; n++,day.setDate(day.getDate()+1)) {
+          const date = `${day.getFullYear()}-${pad(day.getMonth()+1)}-${pad(day.getDate())}`;
+          booked.push({id:-(booking.id*1000+n),start_at:`${date}T${booking.start_time}`,end_at:`${date}T${booking.end_time}`,status:"busy",title:`Confirmed: ${booking.site_name}`,readonly:true});
+        }
+      }
+      setItems([...(Array.isArray(data) ? data : []), ...booked]);
     } catch (e: any) {
       setItems([]);
       setError(typeof e?.message === "string" ? e.message : "FAILED_TO_LOAD");
@@ -316,6 +332,7 @@ export default function ProfessionalAvailabilityPage() {
       const payload = {
         start_at: toIsoLocal(start),
         end_at: toIsoLocal(end),
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         status: fStatus,
         title: fTitle.trim() || null,
         notes: fNotes.trim() || null,
@@ -412,6 +429,7 @@ export default function ProfessionalAvailabilityPage() {
   const handleEventChange = async (change: EventChangeArg) => {
     const id = change.event.id;
     if (!id) return;
+    if (Number(id) < 0) { change.revert(); return; }
 
     setError(null);
     setInfo(null);

@@ -19,6 +19,7 @@ type BookingRequestItem = {
 export default function ProfessionalDashboardPage() {
   const [apps, setApps] = useState<MyApplication[]>([]);
   const [bookingRequests, setBookingRequests] = useState<BookingRequestItem[]>([]);
+  const [upcomingCount, setUpcomingCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,14 +40,14 @@ export default function ProfessionalDashboardPage() {
         ]);
 
         if (!appsRes.ok) {
-          setError(`APPLICATIONS STATUS ${appsRes.status}: ${appsText || "EMPTY"}`);
+          setError("Your applications could not be loaded. Refresh the page to try again.");
           setApps([]);
           setBookingRequests([]);
           return;
         }
 
         if (!requestsRes.ok) {
-          setError(`BOOKING REQUESTS STATUS ${requestsRes.status}: ${requestsText || "EMPTY"}`);
+          setError("Your booking requests could not be loaded. Refresh the page to try again.");
           setApps([]);
           setBookingRequests([]);
           return;
@@ -55,6 +56,11 @@ export default function ProfessionalDashboardPage() {
         const appsData = appsText ? JSON.parse(appsText) : [];
         const requestsData = requestsText ? JSON.parse(requestsText) : [];
 
+        const bookingsResponse = await fetch("/api/bookings", {cache:"no-store"});
+        if (!bookingsResponse.ok) throw new Error("Your bookings could not be loaded. Please refresh.");
+        const bookings = await bookingsResponse.json();
+        const today = new Date().toLocaleDateString("en-CA", {timeZone:"Europe/London"});
+        setUpcomingCount(bookings.filter((booking: {status:string;end_date:string})=>booking.status === "confirmed" && booking.end_date >= today).length);
         setApps(Array.isArray(appsData) ? appsData : []);
         setBookingRequests(Array.isArray(requestsData) ? requestsData : []);
       } catch (e: any) {
@@ -90,7 +96,7 @@ export default function ProfessionalDashboardPage() {
       (r) => (r.status ?? "").toLowerCase() === "pending",
     ).length;
 
-    const upcomingBookings = 0;
+    const upcomingBookings = upcomingCount;
 
     return {
       inReview,
@@ -100,7 +106,7 @@ export default function ProfessionalDashboardPage() {
       pendingBookingRequests,
       upcomingBookings,
     };
-  }, [apps, bookingRequests]);
+  }, [apps, bookingRequests, upcomingCount]);
 
   return (
     <div className="space-y-6">
@@ -129,7 +135,7 @@ export default function ProfessionalDashboardPage() {
       )}
 
       {!loading && error && (
-        <div className="rounded-2xl border border-red-500/40 bg-red-950/30 px-4 py-3 text-sm text-red-200 whitespace-pre-wrap">
+        <div className="rounded-2xl border border-red-500/40 bg-red-950/30 px-4 py-3 text-sm text-red-200 whitespace-pre-wrap break-words">
           {error}
         </div>
       )}

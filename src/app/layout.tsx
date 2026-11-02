@@ -11,9 +11,8 @@ export const metadata: Metadata = {
     template: "%s | ContractPros UK",
   },
   description:
-    "ContractPros connects companies with verified contract and interim professionals. Post roles fast, match by availability, and hire with confidence.",
+    "ContractPros connects companies, agencies and contract professionals. Create a profile, explore opportunities and arrange engagements.",
   applicationName: "ContractPros",
-  alternates: { canonical: "/" },
 
   icons: {
     icon: "/favicon.ico",
@@ -26,7 +25,7 @@ export const metadata: Metadata = {
     siteName: "ContractPros",
     title: "ContractPros UK – Contract & Interim Recruitment Made Easy",
     description:
-      "Connect with verified contract and interim professionals. Match by availability and hire faster.",
+      "Connect with contract and interim professionals. Explore opportunities and arrange engagements.",
     images: [
       {
         url: "/company-logo-new.png",
@@ -42,8 +41,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "ContractPros UK",
     description:
-      "Connect with verified contract and interim professionals. Match by availability and hire faster.",
-    images: ["/og-image.png"],
+      "Connect with contract and interim professionals. Explore opportunities and arrange engagements.",
+    images: ["/company-logo-new.png"],
   },
 };
 

@@ -7,6 +7,7 @@ type CompanyDashboard = {
   total_jobs: number;
   total_applications: number;
   total_bookings: number;
+  total_booking_requests: number;
   applications_by_status: Record<string, number>;
 };
 
@@ -87,7 +88,7 @@ export default function CompanyDashboardPage() {
             <StatCard label="Bookings" value={data.total_bookings} />
             <StatCard
               label="Booking requests sent"
-              value={0}
+              value={data.total_booking_requests ?? 0}
               href="/dashboard/company/booking-requests"
             />
           </div>

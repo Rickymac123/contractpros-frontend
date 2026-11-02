@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { clearAuth } from "@/lib/auth";
@@ -107,6 +108,7 @@ export default function AdminDashboardPage() {
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-8">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Admin Overview</h1>
+          <Link href="/dashboard/admin/qualifications" className="text-sm text-purple-300">Review qualifications →</Link>
         <p className="mt-2 text-sm text-neutral-400">
           Platform-wide snapshot. Click any stat to drill down.
         </p>
