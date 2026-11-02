@@ -49,21 +49,21 @@ export default function CompanyDashboardPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-8">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            Company dashboard
+            The right people. The next step.
           </h1>
           <p className="mt-1 text-sm text-neutral-400">
-            Overview of your jobs, applications and bookings
+            Keep your jobs, applications and bookings moving.
           </p>
         </div>
 
         <Link
-          href="/dashboard/company/jobs"
+          href="/dashboard/company/jobs/new"
           className="rounded-xl border border-purple-500/70 bg-purple-600/80 px-4 py-2 text-sm font-medium shadow-[0_0_25px_rgba(168,85,247,0.35)] transition hover:bg-purple-500 hover:shadow-[0_0_40px_rgba(168,85,247,0.55)]"
         >
-          Manage jobs →
+          + Create a job
         </Link>
       </header>
 
@@ -82,7 +82,7 @@ export default function CompanyDashboardPage() {
 
       {!loading && !error && data && (
         <>
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard label="Active jobs" value={data.total_jobs} />
             <StatCard label="Applications" value={data.total_applications} />
             <StatCard label="Bookings" value={data.total_bookings} />
@@ -93,6 +93,7 @@ export default function CompanyDashboardPage() {
             />
           </div>
 
+          <section className="cp-focus-panel"><span aria-hidden="true">✧</span><div><p className="cp-focus-label">YOUR NEXT STEP</p><h2>Find the right fit for your next job.</h2><p>Review your active roles, compare applicants and keep the next step clear.</p></div><Link href="/dashboard/company/jobs">Review jobs ↗</Link></section>
           <div className="rounded-3xl border border-neutral-800/80 bg-gradient-to-b from-neutral-900/80 to-black/90 shadow-[0_0_40px_rgba(0,0,0,0.6)]">
             <div className="border-b border-neutral-800/80 px-6 py-4">
               <h2 className="text-sm font-medium text-neutral-200">

@@ -23,3 +23,5 @@ button:not(:disabled),select{cursor:pointer}input,select,textarea{color-scheme:l
 @media(prefers-reduced-motion:reduce){.cp-sidebar{transition:none}}
 
 body .cp-public-header{background:#15121f}body .cp-public-header a{color:#e6dfee}body .cp-public-header a:hover{color:white}
+
+body :is(button,a)[class~="bg-purple-600/80"]{background:#692b9e;color:white}.cp-legal-brand{display:inline-block;padding:12px 22px;background:#15121f;border-radius:8px}.cp-focus-panel{display:flex;flex-wrap:wrap;gap:20px;align-items:center;background:linear-gradient(100deg,#ede4f6,#f5f1fa);border:1px solid #dfd2ec;border-radius:9px;padding:26px}.cp-focus-panel>span{padding:14px 20px;border-radius:50%;background:#e2d3f0;font-size:26px;color:#5f2b82}.cp-focus-label{font-size:10px;letter-spacing:1.4px;color:#746181}.cp-focus-panel h2{font-size:20px;margin:8px 0}.cp-focus-panel p:last-child{font-size:13px;color:#71697d}.cp-focus-panel>a{margin-left:auto;color:#7136a0;font-size:13px}
