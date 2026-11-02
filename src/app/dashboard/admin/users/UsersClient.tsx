@@ -51,7 +51,7 @@ export default function AdminUsersPage() {
 
   // NEW: UI state controlled by URL
   const [q, setQ] = useState("");
-  const [roleFilter, setRoleFilter] = useState<"all" | "company" | "agency" | "admin">("all");
+  const [roleFilter, setRoleFilter] = useState<"all" | "company" | "agency" | "professional" | "admin">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "archived">("all");
 
   // read params on mount + when URL changes
@@ -61,7 +61,7 @@ export default function AdminUsersPage() {
     const query = searchParams.get("q") ?? "";
 
     setRoleFilter(
-      role === "company" || role === "agency" || role === "admin" ? (role as any) : "all",
+      role === "company" || role === "agency" || role === "professional" || role === "admin" ? (role as any) : "all",
     );
     setStatusFilter(status === "active" || status === "archived" ? (status as any) : "all");
     setQ(query);
@@ -140,7 +140,7 @@ export default function AdminUsersPage() {
     const label = nextActive ? "Unarchive (activate)" : "Archive (disable)";
 
     const confirmed = window.confirm(
-      `${label} this user?\n\n${u.email}\n\nThis toggles is_active.`,
+      `${label} this user?\n\n${u.email}\n\nArchived users cannot sign in. You can restore access later.`,
     );
     if (!confirmed) return;
 
@@ -220,6 +220,7 @@ export default function AdminUsersPage() {
           >
             <option value="all">All roles</option>
             <option value="company">Companies</option>
+            <option value="professional">Professionals</option>
             <option value="agency">Agencies</option>
             <option value="admin">Admins</option>
             <option value="admin"></option>
@@ -296,7 +297,7 @@ export default function AdminUsersPage() {
                     <button
                       type="button"
                       onClick={() => toggleArchive(u)}
-                      disabled={!!busy || !isMe}
+                      disabled={!!busy || !!isMe || !meId}
                       className="rounded-lg border border-neutral-700 bg-neutral-900/70 px-2.5 py-1 text-xs text-neutral-200 transition hover:border-neutral-500 hover:bg-neutral-800 disabled:opacity-60"
                       title={active ? "Archive user" : "Unarchive user"}
                     >
