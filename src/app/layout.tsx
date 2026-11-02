@@ -14,10 +14,6 @@ export const metadata: Metadata = {
     "ContractPros connects companies, agencies and contract professionals. Create a profile, explore opportunities and arrange engagements.",
   applicationName: "ContractPros",
 
-  icons: {
-    icon: "/favicon.ico",
-    apple: "/apple-touch-icon.png",
-  },
 
   openGraph: {
     type: "website",
