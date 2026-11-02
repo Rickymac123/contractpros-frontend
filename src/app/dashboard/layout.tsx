@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { API_BASE_URL } from "@/lib/config";
 import type { ReactNode } from "react";
+import WorkspaceSidebar from "@/components/WorkspaceSidebar";
 import DashboardHeader from "@/components/DashboardHeader";
 
 export default async function DashboardLayout({ children }: { children: ReactNode }) {
@@ -13,14 +14,5 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   if (!response.ok) throw new Error("Your account could not be loaded. Please try again shortly.");
   const user = await response.json();
   if (!user.is_active || !user.is_verified) redirect("/login?error=LOGIN_USER_NOT_VERIFIED");
-  return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,_rgba(168,85,247,0.18),_transparent_60%),radial-gradient(circle_at_bottom,_rgba(59,130,246,0.12),_transparent_55%)]" />
-
-      <div className="relative">
-        <DashboardHeader />
-        <main className="mx-auto min-w-0 max-w-6xl px-4 py-8">{children}</main>
-      </div>
-    </div>
-  );
+  return <div className="cp-workspace"><WorkspaceSidebar role={user.role} email={user.email}/><div className="cp-workspace-main"><DashboardHeader/><main className="cp-content">{children}</main></div></div>;
 }

@@ -104,8 +104,8 @@ export default function DashboardHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-neutral-800/80 bg-black/60 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+    <header className="cp-workspace-header">
+      <div className="flex items-center justify-between gap-4 px-5 py-4 md:px-10">
         {/* Left: logo + brand (clickable home) */}
         <button
           type="button"
@@ -113,21 +113,7 @@ export default function DashboardHeader() {
           className="flex items-center gap-3 text-left"
           title="Go to dashboard"
         >
-          <div className="relative h-15 w-50">
-            <Image
-              src="/company-logo-new.png"
-              alt="Contractpros"
-              fill
-              unoptimized
-              className="object-contain"
-              priority
-            />
-          </div>
-
-          <div className="leading-tight">
-            <div className="text-sm font-semibold text-white">Contract Pro's UK</div>
-            <div className="text-xs text-neutral-400">Professional Contract Solutions</div>
-          </div>
+          <span className="text-sm text-neutral-500 capitalize">{me?.role || "Workspace"} / Overview</span>
         </button>
 
         {/* Right: user + avatar dropdown */}

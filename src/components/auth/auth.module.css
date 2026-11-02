@@ -8,3 +8,8 @@
 @media(max-width:900px){.story{padding:30px 9%}.story h1{font-size:42px}.formSide{padding:30px 7%}.shell{grid-template-columns:minmax(280px,.8fr) minmax(420px,1.2fr)}}
 @media(max-width:720px){.shell{display:block}.story{padding:22px 24px}.storyBody,.storyFooter{display:none}.brand{font-size:20px}.formSide{padding:25px 24px 40px}.topline{margin-bottom:28px}.heading{font-size:31px}.row{gap:10px}.socials{gap:6px}.formWrap{max-width:500px;padding:24px 18px}.formSide{padding:12px 16px 30px}.logo{width:100px;height:66px}.story{padding:12px 24px}.heading{font-size:26px}}
 @media(prefers-reduced-motion:reduce){.primary{transition:none}}
+
+/* Marvis-inspired public account pages */
+.shell{background:#f6f5fa;color:#302b39}.story{background:#15121f;color:white}.formWrap{background:white;border-color:#e0dce7;box-shadow:0 4px 18px #26133808;border-radius:12px}.intro,.topline,.hint,.footnote,.socialNote,.role small,.divider{color:#746a80}.topline a,.link,.show,.back{color:#7136a0}.role,.socials button,.input{background:white;border-color:#d9d2e2;color:#302b39}.role:has(input:checked){background:#eee5f7;border-color:#9259be}.socials button:disabled{background:#f5f2f8;color:#84798e}.primary{background:#692b9e;border-color:#692b9e}.primary:hover{background:#54217e}.notice{background:#eee5f7;color:#4d2c66}.error{background:#fff0f1;color:#a02838}.success{background:#ecf6ef;color:#24664b}.divider:before,.divider:after{background:#e0dce7}
+
+.formWrap .eyebrow{color:#7136a0}

@@ -14,10 +14,10 @@ export default function HomePage() {
   return (
     <main id="top" className="min-h-screen overflow-x-clip bg-black text-neutral-100 selection:bg-purple-500/40">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-purple-600 focus:p-4">Skip to content</a>
-      <header className="border-b border-white/10">
+      <header className="cp-public-header border-b border-white/10">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-3 sm:px-8">
           <Link href="/" aria-label="ContractPros UK home" className="shrink-0 rounded-lg focus-visible:outline-2 focus-visible:outline-purple-400">
-            <Image src="/company-logo-new.png" alt="ContractPros UK" width={150} height={105} priority className="h-auto w-[105px] sm:w-[140px]" />
+            <Image src="/contractpros-logo-transparent.png" alt="ContractPros UK" width={150} height={105} priority className="h-auto w-[105px] sm:w-[140px]" />
           </Link>
           <nav aria-label="Main navigation" className="flex items-center gap-3 sm:gap-6">
             <a href="#who-its-for" className="hidden text-sm text-neutral-300 transition hover:text-purple-300 lg:block">Who it’s for</a>
@@ -46,7 +46,7 @@ export default function HomePage() {
               <div className="relative aspect-[5/4]">
                 <Image src="https://images.unsplash.com/photo-1522071901873-411886a10004?auto=format&fit=crop&w=1600&q=80" alt="Professionals working together around a table" fill sizes="(max-width: 1023px) 100vw, 550px" priority className="object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-black/10 to-transparent" />
-                <div className="absolute bottom-6 left-6 right-6"><p className="text-xs font-medium uppercase tracking-[0.18em] text-purple-200">Made for contract work</p><p className="mt-2 text-2xl font-semibold tracking-tight">Expertise meets opportunity.</p></div>
+                <div className="cp-photo-caption absolute bottom-6 left-6 right-6"><p className="text-xs font-medium uppercase tracking-[0.18em] text-purple-200">Made for contract work</p><p className="mt-2 text-2xl font-semibold tracking-tight">Expertise meets opportunity.</p></div>
               </div>
               <div className="flex items-start gap-4 px-6 pb-7 pt-2"><span className="rounded-xl border border-purple-400/20 bg-purple-500/10 p-3 text-purple-300"><CalendarDays size={23} aria-hidden="true" /></span><div><p className="font-medium">Make your next move with clarity</p><p className="mt-1 text-sm leading-6 text-neutral-400">Profiles, availability and applications.<br className="hidden sm:block" /> Together in one place.</p></div></div>
             </div>

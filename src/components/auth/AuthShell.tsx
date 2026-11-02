@@ -6,7 +6,7 @@ import styles from "./auth.module.css";
 export default function AuthShell({ children }: { children: ReactNode }) {
   return <main className={styles.shell}>
     <aside className={styles.story}>
-      <Link href="/" className={styles.brand}><Image src="/company-logo-new.png" alt="ContractPros UK" width={160} height={105} className={styles.logo} priority /></Link>
+      <Link href="/" className={styles.brand}><Image src="/contractpros-logo-transparent.png" alt="ContractPros UK" width={160} height={105} className={styles.logo} priority /></Link>
       <div className={styles.storyBody}>
         <p className={styles.eyebrow}>GOOD PEOPLE. GREAT POSSIBILITIES.</p>
         <h1>Your next chapter<br />starts with a<br /><em>connection.</em></h1>
