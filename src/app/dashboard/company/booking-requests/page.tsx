@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import CancelConfirmedBooking from "@/components/CancelConfirmedBooking";
 
 type BookingRequestItem = {
   id: number;
@@ -224,6 +225,7 @@ export default function CompanyBookingRequestsPage() {
 
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusPill status={item.status} />
+                    {item.status === "accepted" && <CancelConfirmedBooking requestId={item.id} onCancelled={() => load()} />}
                     {item.status === "pending" && <button disabled={cancelling !== null} onClick={() => void cancelRequest(item.id)} className="rounded-lg border border-neutral-600 px-3 py-2 text-sm disabled:opacity-50">{cancelling === item.id ? "Cancelling…" : "Cancel request"}</button>}
                     {item.status === "accepted" && <a className="text-sm text-purple-300 underline" href="mailto:info@contractpros.co.uk">Need to change this booking? Contact support</a>}
                     {(item.status || "").toLowerCase() === "pending" && (
