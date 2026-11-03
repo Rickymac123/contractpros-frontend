@@ -314,7 +314,7 @@ export default function MarketplaceJobsPage() {
                     <button
                       type="button"
                       onClick={() => handleApply(j.id)}
-                      disabled={!me || archived || alreadyApplied || isApplying}
+                      disabled={!me || !["professional", "agency"].includes(me.role?.toLowerCase() || "") || archived || alreadyApplied || isApplying}
                       className={
                         archived || alreadyApplied
                           ? "rounded-xl border border-neutral-800 bg-neutral-950/40 px-3 py-2 text-xs text-neutral-500 cursor-not-allowed"
@@ -327,7 +327,7 @@ export default function MarketplaceJobsPage() {
                           ? "Applied"
                           : isApplying
                             ? "Applying…"
-                            : me?.role?.toLowerCase() === "agency" ? "Select professional" : "Apply"}
+                            : me?.role?.toLowerCase() === "agency" ? "Select professional" : me?.role?.toLowerCase() === "professional" ? "Apply" : "Professional or agency account required"}
                     </button>
                   </div>
                 </div>
