@@ -19,6 +19,7 @@ export default function AgencyApplicationsPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [selected, setSelected] = useState("");
   const [query, setQuery] = useState("");
+  const [requestedJob, setRequestedJob] = useState<number | null>(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -34,7 +35,11 @@ export default function AgencyApplicationsPage() {
     } catch (e) { setError(e instanceof Error ? e.message : "Unable to load applications."); }
     finally { setLoading(false); }
   }
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    const job = new URLSearchParams(window.location.search).get("job");
+    if (job) setRequestedJob(Number(job));
+    void load();
+  }, []);
 
   async function act(url: string, body: object, method: string, success: string) {
     setBusy(true); setError(""); setMessage("");
@@ -61,7 +66,8 @@ export default function AgencyApplicationsPage() {
           <label className="block">Search jobs<input value={query} onChange={e => setQuery(e.target.value)} className="mt-2 block w-full rounded-lg border border-neutral-700 bg-black p-3" /></label>
           {!jobs.length && <p>No open jobs yet. Your professional profiles are saved; check back for new opportunities.</p>}
           {jobs.length > 0 && !jobs.some(j => `${j.title} ${j.location || ""}`.toLowerCase().includes(query.toLowerCase())) && <p>No jobs match your search. Try a different title or location.</p>}
-          {jobs.filter(j => `${j.title} ${j.location || ""}`.toLowerCase().includes(query.toLowerCase())).map(j => {
+          {requestedJob && <p>Showing the selected job. <button className="underline" onClick={() => setRequestedJob(null)}>Show all jobs</button></p>}
+          {jobs.filter(j => !requestedJob || j.id === requestedJob).filter(j => `${j.title} ${j.location || ""}`.toLowerCase().includes(query.toLowerCase())).map(j => {
             const existing = applications.find(a => a.jobpost_id === j.id && a.talent_id === Number(selected));
             return <article key={j.id} className="space-y-2 rounded-xl border border-neutral-800 p-4"><h3 className="font-semibold">{j.title}</h3><p>{j.location}</p><p className="whitespace-pre-wrap text-sm text-neutral-400">{j.description}</p>
               <button disabled={!selected || busy || !!existing} onClick={() => void act(`/api/marketplace/jobs/${j.id}/apply`, { talent_id: Number(selected) }, "POST", "Application submitted. You can track it below.")} className="rounded-lg bg-purple-600 px-4 py-2 disabled:opacity-50">{existing ? `Application ${existing.status}` : "Submit selected professional"}</button></article>;
