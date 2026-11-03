@@ -1,4 +1,5 @@
 "use client";
+import BusinessLink from "@/components/BusinessLink";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -116,6 +117,12 @@ export default function MarketplaceJobsPage() {
     loadMyApplications();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!loading && /^#job-\d+$/.test(window.location.hash)) {
+      document.getElementById(window.location.hash.slice(1))?.scrollIntoView({block:'center'});
+    }
+  }, [loading, jobs]);
 
   const backHref = useMemo(() => homeFor(me), [me]);
 
@@ -265,12 +272,13 @@ export default function MarketplaceJobsPage() {
             return (
               <div
                 key={j.id}
+                id={`job-${j.id}`}
                 className="rounded-2xl border border-neutral-800 bg-neutral-950/60 px-4 py-3"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <div className="text-sm font-semibold text-neutral-100">{j.title}</div>
+                      <div className="text-sm font-semibold text-neutral-100">{j.title}</div><BusinessLink id={j.company_id}/>
                       {archived && (
                         <span className="rounded-full border border-neutral-700 bg-neutral-900 px-2 py-0.5 text-[11px] text-neutral-200">
                           Archived
@@ -306,7 +314,7 @@ export default function MarketplaceJobsPage() {
                     <button
                       type="button"
                       onClick={() => handleApply(j.id)}
-                      disabled={!me || archived || alreadyApplied || isApplying}
+                      disabled={!me || !["professional", "agency"].includes(me.role?.toLowerCase() || "") || archived || alreadyApplied || isApplying}
                       className={
                         archived || alreadyApplied
                           ? "rounded-xl border border-neutral-800 bg-neutral-950/40 px-3 py-2 text-xs text-neutral-500 cursor-not-allowed"
@@ -319,7 +327,7 @@ export default function MarketplaceJobsPage() {
                           ? "Applied"
                           : isApplying
                             ? "Applying…"
-                            : me?.role?.toLowerCase() === "agency" ? "Select professional" : "Apply"}
+                            : me?.role?.toLowerCase() === "agency" ? "Select professional" : me?.role?.toLowerCase() === "professional" ? "Apply" : "Professional or agency account required"}
                     </button>
                   </div>
                 </div>

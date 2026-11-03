@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { API_BASE_URL } from "@/lib/config";
 
 function getSessionCookie(req: NextRequest): string | null {
-  return req.cookies.get("backend_session")?.value ?? null;
+  const raw = req.cookies.get("backend_session")?.value;
+  return raw ? decodeURIComponent(raw) : null;
 }
 
 export async function POST(req: NextRequest) {

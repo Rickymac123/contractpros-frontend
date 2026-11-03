@@ -4,9 +4,9 @@ import {usePathname} from "next/navigation";
 import {useEffect,useRef,useState} from "react";
 import {LayoutDashboard,BriefcaseBusiness,CalendarDays,Users,FileText,Archive,UserRound,ShieldCheck,Menu,X} from "lucide-react";
 const menus:Record<string,[string,string,typeof LayoutDashboard][]>= {
- company:[["","Overview",LayoutDashboard],["/jobs","Jobs",BriefcaseBusiness],["/booking-requests","Booking requests",CalendarDays],["/jobs/archived","Archived jobs",Archive]],
+ company:[["","Overview",LayoutDashboard],["/profile","Business profile",BriefcaseBusiness],["/jobs","Jobs",BriefcaseBusiness],["/booking-requests","Booking requests",CalendarDays],["/jobs/archived","Archived jobs",Archive]],
  professional:[["","Overview",LayoutDashboard],["/applications","Applications",FileText],["/booking-requests","Booking requests",CalendarDays],["/profile","My profile",UserRound],["/preview","Public profile",Users],["/availability","Availability",CalendarDays]],
- agency:[["","Overview",LayoutDashboard],["/talent","Talent",Users],["/applications","Applications",FileText],["/booking-requests","Booking requests",CalendarDays]],
+ agency:[["","Overview",LayoutDashboard],["/profile","Business profile",BriefcaseBusiness],["/talent","Talent",Users],["/applications","Applications",FileText],["/booking-requests","Booking requests",CalendarDays]],
  admin:[["","Overview",LayoutDashboard],["/users","Users",Users],["/jobs","Jobs",BriefcaseBusiness],["/talent","Talent",Users],["/qualifications","Qualifications",ShieldCheck],["/bookings","Bookings",CalendarDays]]
 };
 export default function WorkspaceSidebar({role,email}:{role:string;email:string}){
