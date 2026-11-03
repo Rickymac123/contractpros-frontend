@@ -139,6 +139,11 @@ export default function MarketplaceJobsPage() {
   const handleApply = async (jobId: number) => {
     if (!jobId || Number.isNaN(Number(jobId))) return;
 
+    if (me?.role?.toLowerCase() === "agency") {
+      router.push(`/dashboard/agency/applications?job=${jobId}`);
+      return;
+    }
+
     // UX guard
     if (appliedJobIds.has(jobId)) return;
     if (applyingId === jobId) return;
@@ -301,7 +306,7 @@ export default function MarketplaceJobsPage() {
                     <button
                       type="button"
                       onClick={() => handleApply(j.id)}
-                      disabled={archived || alreadyApplied || isApplying}
+                      disabled={!me || archived || alreadyApplied || isApplying}
                       className={
                         archived || alreadyApplied
                           ? "rounded-xl border border-neutral-800 bg-neutral-950/40 px-3 py-2 text-xs text-neutral-500 cursor-not-allowed"
@@ -314,7 +319,7 @@ export default function MarketplaceJobsPage() {
                           ? "Applied"
                           : isApplying
                             ? "Applying…"
-                            : "Apply"}
+                            : me?.role?.toLowerCase() === "agency" ? "Select professional" : "Apply"}
                     </button>
                   </div>
                 </div>

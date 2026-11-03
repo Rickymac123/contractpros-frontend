@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthUser } from "@/hooks/useAuthUser";
@@ -12,7 +13,9 @@ type Talent = {
   full_name: string;
   profession: string;
   location: string;
-  day_rate: number;
+  day_rate: number | null;
+  hourly_rate: number | null;
+  rate_type: string | null;
   skills: string | null;
   bio?: string | null;
   profile_image_url?: string | null;
@@ -148,7 +151,7 @@ export default function AgencyTalentListPage() {
           {talent.map((t) => (
             <Card
               key={t.id}
-              onClick={() => router.push(`/dashboard/agency/talent/${t.id}`)}
+
               className="flex cursor-pointer gap-4 border border-neutral-800 bg-neutral-950/70 p-4 transition hover:border-purple-500/50"
             >
               <Avatar className="h-14 w-14 shrink-0">
@@ -170,14 +173,14 @@ export default function AgencyTalentListPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="text-sm font-semibold text-white">
-                      {t.full_name}
+                      <Link className="underline-offset-4 hover:underline focus:underline" href={`/dashboard/agency/talent/${t.id}`}>{t.full_name}</Link>
                     </div>
                     <div className="text-xs text-neutral-400">{t.profession}</div>
                   </div>
 
                   <div className="text-right">
                     <div className="text-sm font-semibold text-purple-300">
-                      £{t.day_rate.toFixed(0)}/day
+                      {(t.rate_type === "hour" ? t.hourly_rate : t.day_rate) == null ? "Rate not provided" : `£${Number(t.rate_type === "hour" ? t.hourly_rate : t.day_rate).toFixed(2)}/${t.rate_type === "hour" ? "hour" : "day"}`}
                     </div>
                     <div className="text-xs text-neutral-500">{t.location}</div>
                   </div>

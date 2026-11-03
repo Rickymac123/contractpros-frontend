@@ -91,7 +91,10 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const upstream = await fetch(`${API_BASE_URL}/talent/`, {
+    const representation = req.nextUrl.searchParams.get("action") === "representation";
+    const id = req.nextUrl.searchParams.get("id");
+    if (representation && (!id || !/^\d+$/.test(id))) return NextResponse.json({detail:"Invalid professional"},{status:400});
+    const upstream = await fetch(representation ? `${API_BASE_URL}/talent/${id}/representation` : `${API_BASE_URL}/talent/`, {
       method: "POST",
       headers: {
         Cookie: session,
