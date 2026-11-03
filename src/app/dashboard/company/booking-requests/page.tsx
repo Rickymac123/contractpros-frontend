@@ -1,4 +1,5 @@
 "use client";
+import BusinessLink from "@/components/BusinessLink";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -216,7 +217,7 @@ export default function CompanyBookingRequestsPage() {
                 <div className="border-b border-neutral-800/70 px-6 py-4 flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <div className="text-sm font-medium text-neutral-200">
-                      Request #{item.id}
+                      Request #{item.id} <BusinessLink id={item.company_id}/>
                     </div>
                     <div className="mt-1 text-xs text-neutral-500">
                       Sent: {fmtDateTime(item.requested_at)}

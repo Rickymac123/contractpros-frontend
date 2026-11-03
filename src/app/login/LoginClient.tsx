@@ -24,7 +24,8 @@ export default function LoginClient() {
       if (!response.ok) { setError(authError(body.detail)); return; }
       const role = body.user?.role;
       if (!["professional", "company", "agency", "admin"].includes(role)) { setError("We couldn’t open your dashboard. Please contact ContractPros support."); return; }
-      window.location.assign(`/dashboard/${role}`);
+      const next = query.get("next");
+      window.location.assign(next && /^\/dashboard\/marketplace\/jobs#job-\d+$/.test(next) ? next : `/dashboard/${role}`);
     } catch { setError("We couldn’t connect. Please try again in a moment."); }
     finally { setBusy(false); }
   }

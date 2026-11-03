@@ -1,4 +1,5 @@
 "use client";
+import BusinessLink from "@/components/BusinessLink";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -224,6 +225,7 @@ export default function CompanyJobDetailPage() {
                 <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white">
                   {job.title}
                 </h2>
+                <BusinessLink id={job.company_id} />
 
                 <p className="mt-3 text-sm text-neutral-400">
                   {[
