@@ -5,14 +5,19 @@ import { useRouter, useParams } from "next/navigation";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import AgencyRepresentationRecord from "@/components/AgencyRepresentationRecord";
 import { Button } from "@/components/ui/button";
 
 type Talent = {
   id: number;
+  representation_confirmed_at?: string | null;
+  notice_provided_on?: string | null;
   full_name: string;
   profession: string;
   location: string;
-  day_rate: number;
+  day_rate: number | null;
+  hourly_rate: number | null;
+  rate_type: string | null;
   skills: string | null;
   bio?: string | null;
   profile_image_url?: string | null;
@@ -232,7 +237,7 @@ export default function TalentDetailPage() {
               Talent profile
             </p>
             <p className="mt-1 text-xs text-neutral-400">
-              Agency view — keep it current or it becomes useless.
+              Agency view — keep the professional’s details accurate and up to date.
             </p>
           </div>
 
@@ -261,14 +266,15 @@ export default function TalentDetailPage() {
 
               <div className="md:text-right">
                 <div className="text-xs uppercase tracking-wide text-neutral-500">
-                  Day rate
+                  {talent.rate_type === "hour" ? "Hourly rate" : "Day rate"}
                 </div>
                 <div className="text-2xl font-semibold text-neutral-100">
-                  £{talent.day_rate.toFixed(0)}
+                  {(talent.rate_type === "hour" ? talent.hourly_rate : talent.day_rate) == null ? "Not provided" : `£${Number(talent.rate_type === "hour" ? talent.hourly_rate : talent.day_rate).toFixed(2)}`}
                 </div>
               </div>
             </div>
 
+            <AgencyRepresentationRecord talentId={talent.id} confirmedAt={talent.representation_confirmed_at} providedOn={talent.notice_provided_on}/>
             {talent.skills && (
               <div className="rounded-xl border border-neutral-800 bg-neutral-950/60 px-4 py-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">

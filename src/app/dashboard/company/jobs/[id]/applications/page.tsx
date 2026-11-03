@@ -198,6 +198,7 @@ export default function CompanyJobApplicationsPage() {
 
       {!loading && !error && apps.length > 0 && (
         <div className="space-y-4">
+          <p className="rounded-xl border border-purple-200 bg-purple-50 p-4 text-sm text-slate-700">Scores compare the supplied job criteria with profile information; they are not hiring recommendations. Missing information earns no match and may need clarification. Qualifications are claims to verify, and location uses text overlap, not travel distance. Review the full profile and make your own decision. Professionals can correct their profile or ask info@contractpros.co.uk for a review.</p>
           {apps.map((a) => {
             const showEngDiscipline = !!a.talent_engineering_discipline?.trim();
 

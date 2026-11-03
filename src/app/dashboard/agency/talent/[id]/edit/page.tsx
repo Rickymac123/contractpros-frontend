@@ -14,7 +14,9 @@ type Talent = {
   full_name: string;
   profession: string;
   location: string;
-  day_rate: number;
+  day_rate: number | null;
+  hourly_rate: number | null;
+  rate_type: string | null;
   skills: string | null;
   bio?: string | null;
   profile_image_url?: string | null;
@@ -31,6 +33,7 @@ export default function TalentEditPage() {
   const [location, setLocation] = useState("");
   const [profession, setProfession] = useState("");
   const [dayRate, setDayRate] = useState<string>("");
+  const [rateType, setRateType] = useState("day");
   const [skills, setSkills] = useState("");
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
@@ -118,7 +121,9 @@ export default function TalentEditPage() {
           setFullName(data.full_name ?? "");
           setLocation(data.location ?? "");
           setProfession(data.profession ?? "");
-          setDayRate(data.day_rate != null ? String(data.day_rate) : "");
+          setRateType(data.rate_type === "hour" ? "hour" : "day");
+          const rate = data.rate_type === "hour" ? data.hourly_rate : data.day_rate;
+          setDayRate(rate != null ? String(rate) : "");
           setSkills(data.skills ?? "");
           setBio(data.bio ?? "");
           setAvatarUrl(data.profile_image_url ?? "");
@@ -144,7 +149,9 @@ export default function TalentEditPage() {
       full_name: fullName,
       location,
       profession,
-      day_rate: dayRate ? Number(dayRate) : null,
+      rate_type: rateType,
+      day_rate: rateType === "day" && dayRate ? Number(dayRate) : null,
+      hourly_rate: rateType === "hour" && dayRate ? Number(dayRate) : null,
       skills: skills || null,
       bio: bio || null,
       profile_image_url: avatarUrl || null,
@@ -238,7 +245,7 @@ export default function TalentEditPage() {
               Talent editor
             </p>
             <p className="mt-1 text-xs text-neutral-400">
-              Update the profile. Bad data in here becomes everyone’s problem.
+              Update the details agreed with the professional.
             </p>
           </div>
 
@@ -301,15 +308,19 @@ export default function TalentEditPage() {
                     </div>
                   </div>
 
-                  {/* Day rate */}
+                  <label className="text-sm">Rate basis<select className="block rounded border p-2" value={rateType} onChange={e=>{setRateType(e.target.value);setDayRate("");}}><option value="day">Per day</option><option value="hour">Per hour</option></select></label>
+                  {/* Rate */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-medium text-neutral-300">
-                      Day rate (£)
+                      {rateType === "hour" ? "Hourly rate (£)" : "Day rate (£)"}
                     </label>
                     <div className="flex items-center gap-2 rounded-xl border border-neutral-700 bg-neutral-950/60 px-3 py-1.5 focus-within:border-purple-500 focus-within:ring-2 focus-within:ring-purple-500/40 transition">
                       <PoundSterling className="h-4 w-4 text-neutral-400" />
                       <Input
                         type="number"
+                        min="0"
+                        step="0.01"
+                        aria-label="Rate in pounds"
                         value={dayRate}
                         onChange={(e) => setDayRate(e.target.value)}
                         placeholder="550"

@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import AgencyRepresentationFields, {emptyRepresentation} from "@/components/AgencyRepresentationFields";
 import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
@@ -69,6 +71,7 @@ type TalentFormValues = z.infer<typeof talentSchema>;
 
 export default function NewTalentPage() {
   const router = useRouter();
+  const [representation, setRepresentation] = useState({...emptyRepresentation});
 
   const {
     register,
@@ -101,6 +104,7 @@ export default function NewTalentPage() {
 
   const onSubmit = async (values: z.input<typeof talentSchema>) => {
     const payload = {
+      representation,
       first_name: values.first_name.trim(),
       last_name: values.last_name.trim(),
       profession_category: values.profession.toLowerCase(),
@@ -162,7 +166,7 @@ export default function NewTalentPage() {
       <div className="overflow-hidden rounded-2xl border border-neutral-800/80 bg-neutral-950/70">
         <div className="border-b border-neutral-800/80 bg-gradient-to-r from-purple-900/30 via-neutral-900 to-neutral-950 px-6 py-4">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-purple-300/80">Talent profile</p>
-          <p className="mt-1 text-xs text-neutral-400">Add details carefully — agencies live and die by data quality.</p>
+          <p className="mt-1 text-xs text-neutral-400">Add accurate details agreed with the professional.</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 px-6 py-6">
@@ -393,6 +397,7 @@ export default function NewTalentPage() {
             {errors.bio && <p className="text-xs text-red-300">{errors.bio.message}</p>}
           </div>
 
+          <AgencyRepresentationFields value={representation} onChange={setRepresentation}/>
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-neutral-800 pt-4">
             <button
               type="button"
