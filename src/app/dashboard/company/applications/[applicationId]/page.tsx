@@ -439,7 +439,7 @@ export default function CompanyApplicationProfilePage() {
               </Field>
             </div>
 
-            <Field label="Site address *">
+            <Field label="UK site address, including postcode *">
               <textarea
                 value={siteAddress}
                 onChange={(e) => setSiteAddress(e.target.value)}

@@ -22,7 +22,7 @@ export default function DirectBookingPage() {
     if(job.is_archived) throw new Error(errors.JOB_CLOSED);
     if(cancelled)return;
     setTitle(job.title);setName([talent.first_name,talent.last_name].filter(Boolean).join(' '));
-    setForm({...initial,start_date:job.start_date||'',end_date:job.end_date||'',start_time:job.start_time?.slice(0,5)||'09:00',end_time:job.end_time?.slice(0,5)||'17:00',site_name:job.site_name||'',site_address:job.site_address||job.location||''});
+    setForm({...initial,start_date:job.start_date||'',end_date:job.end_date||'',start_time:job.start_time?.slice(0,5)||'09:00',end_time:job.end_time?.slice(0,5)||'17:00',site_name:job.site_name||'',site_address:[job.site_address||job.location,job.postcode].filter(Boolean).join(', ')});
    } catch(e){if(!cancelled)setError(e instanceof Error?e.message:'Unable to load booking details.');}
    finally{if(!cancelled)setLoading(false);}
   } void load();return()=>{cancelled=true;};
@@ -37,7 +37,7 @@ export default function DirectBookingPage() {
    setSent(true);
   }catch(e){setError(e instanceof Error?e.message:'The request could not be sent.');}finally{setSaving(false);}
  }
- const fields: Array<[keyof BookingForm,string,string]>=[['start_date','Start date','date'],['end_date','End date','date'],['start_time','Daily start time','time'],['end_time','Daily end time','time'],['site_name','Site name','text'],['site_address','Site address','text'],['contact_name','On-site contact name','text'],['contact_phone','On-site contact phone','tel']];
+ const fields: Array<[keyof BookingForm,string,string]>=[['start_date','Start date','date'],['end_date','End date','date'],['start_time','Daily start time','time'],['end_time','Daily end time','time'],['site_name','Site name','text'],['site_address','UK site address, including postcode','text'],['contact_name','On-site contact name','text'],['contact_phone','On-site contact phone','tel']];
  return <div className="mx-auto max-w-3xl space-y-6 p-6"><Link className="text-purple-300 underline" href={`/dashboard/company/jobs/${params.id}/search`}>Back to professionals</Link><h1 className="text-2xl font-semibold">Request a booking</h1>
  {loading?<p>Loading booking details…</p>:<>
  {error&&<p role="alert" className="rounded-xl border border-red-700 p-4 text-red-200">{error}</p>}
