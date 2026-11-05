@@ -360,10 +360,11 @@ export default function NewJobPage() {
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
-                    Postcode
+                    UK work postcode (required)
                   </label>
                   <input
                     name="postcode"
+                    required
                     value={form.postcode}
                     onChange={handleChange}
                     placeholder="e.g. SN1 1AA"
