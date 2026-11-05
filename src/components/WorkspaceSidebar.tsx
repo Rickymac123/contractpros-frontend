@@ -7,7 +7,7 @@ const menus:Record<string,[string,string,typeof LayoutDashboard][]>= {
  company:[["","Overview",LayoutDashboard],["/profile","Business profile",BriefcaseBusiness],["/jobs","Jobs",BriefcaseBusiness],["/booking-requests","Booking requests",CalendarDays],["/jobs/archived","Archived jobs",Archive]],
  professional:[["","Overview",LayoutDashboard],["/applications","Applications",FileText],["/booking-requests","Booking requests",CalendarDays],["/profile","My profile",UserRound],["/preview","Public profile",Users],["/availability","Availability",CalendarDays]],
  agency:[["","Overview",LayoutDashboard],["/profile","Business profile",BriefcaseBusiness],["/talent","Talent",Users],["/applications","Applications",FileText],["/booking-requests","Booking requests",CalendarDays]],
- admin:[["","Overview",LayoutDashboard],["/users","Users",Users],["/jobs","Jobs",BriefcaseBusiness],["/talent","Talent",Users],["/qualifications","Qualifications",ShieldCheck],["/bookings","Bookings",CalendarDays]]
+ admin:[["","Overview",LayoutDashboard],["/users","Users",Users],["/jobs","Jobs",BriefcaseBusiness],["/talent","Talent",Users],["/qualifications","Qualifications",ShieldCheck],["/bookings","Bookings",CalendarDays],["/payment-terms","Payment terms",BriefcaseBusiness]]
 };
 export default function WorkspaceSidebar({role,email}:{role:string;email:string}){
  const path=usePathname(),[open,setOpen]=useState(false);const base=`/dashboard/${role}`;
