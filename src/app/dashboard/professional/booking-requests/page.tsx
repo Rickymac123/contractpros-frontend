@@ -285,6 +285,7 @@ export default function ProfessionalBookingRequestsPage() {
 
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusPill status={item.status} />
+                    {item.status === "accepted" && <Link href={`/dashboard/bookings/${item.id}/ir35`} className="rounded-xl border border-purple-400/40 px-3 py-2 text-xs text-purple-100">IR35 guidance</Link>}
                     {item.status === "accepted" && <CancelConfirmedBooking requestId={item.id} onCancelled={() => load()} />}
                     {isPending && <TimeRemainingPill label={remaining.label} expired={remaining.expired} />}
                   </div>
