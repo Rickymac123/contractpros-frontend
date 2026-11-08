@@ -173,8 +173,11 @@ export default function ProfessionalPreviewPage() {
     setInviteBusy(true); setInviteError("");
     try {
       const response = await fetch("/api/professional/review-invites", { method: "POST" });
-      if (!response.ok) throw new Error("Unable to create a review link. Please try again.");
-      const invite = await response.json(); setInviteUrl(invite.invite_url);
+      const invite = await response.json();
+      if (!response.ok) throw new Error(invite.detail === "EXTERNAL_REVIEW_LIMIT_REACHED"
+        ? "Your two external review slots are already used or reserved by active links. An expired unused link can be replaced. Reviews from completed ContractPros bookings are separate."
+        : "Unable to create a review link. Please try again.");
+      setInviteUrl(invite.invite_url);
     } catch (e) { setInviteError(e instanceof Error ? e.message : "Unable to create review link."); }
     finally { setInviteBusy(false); }
   }
@@ -418,7 +421,7 @@ export default function ProfessionalPreviewPage() {
 
           <section className="space-y-3 rounded-2xl border border-neutral-800 bg-neutral-950/60 p-5">
             <h2 className="font-semibold">Request a client review</h2>
-            <p className="text-sm text-neutral-400">Create a link and share it with a client you have worked with. Each link accepts one review and expires after 14 days. The client confirms their review by email.</p>
+            <p className="text-sm text-neutral-400">You can collect up to two external reviews from clients you have worked with. Each active link reserves one slot, accepts one review and expires after 14 days. Expired unused links can be replaced. Submitted reviews use a slot while awaiting email confirmation. Reviews from completed ContractPros bookings do not count towards this limit.</p>
             <button disabled={inviteBusy} onClick={() => void createInvite()} className="rounded-lg bg-purple-600 px-4 py-2 disabled:opacity-50">{inviteBusy ? "Creating link…" : "Create review link"}</button>
             {inviteError && <p role="alert" className="text-red-300">{inviteError}</p>}
             {inviteUrl && <label className="block text-sm">Review link — copy and share with your client<input readOnly value={inviteUrl} onFocus={e => e.target.select()} className="mt-2 block w-full rounded-lg border border-neutral-700 bg-black p-3" /></label>}
