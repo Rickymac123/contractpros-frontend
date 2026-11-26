@@ -50,7 +50,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(168,85,247,0.18),_transparent_60%),radial-gradient(circle_at_bottom,_rgba(59,130,246,0.12),_transparent_55%)]" />
 
         <div className="min-h-screen">{children}</div>
-      <script defer src="/mia-tracker.js" data-site="contract-pros" /></body>
+      <script defer src="/mia-tracker.js?v=20261126privacy" data-site="contract-pros" /></body>
     </html>
   );
 }

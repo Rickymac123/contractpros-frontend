@@ -3,14 +3,14 @@
  if(window.MiaAnalytics)return;
  const script=document.currentScript,site=script?.dataset.site;if(!site)return;
  const endpoint=new URL('mia-collect.php',script.src).href,key='mia-analytics-v1:'+site;
- const routes=new Set(['/','/about','/contact','/pricing','/features','/how-it-works','/register','/signup','/sign-up','/login','/sign-in','/jobs','/contractors','/clients','/blog','/privacy','/terms','/products','/services','/booking','/vehicles','/campervan-hire','/dashboard','/other']);
+ const routes=new Set(['/','/about','/contact','/pricing','/features','/how-it-works','/register','/signup','/sign-up','/login','/sign-in','/jobs','/contractors','/clients','/blog','/privacy','/terms','/products','/services','/booking','/vehicles','/campervan-hire','/dashboard','/hire-section/campervans','/hire-section/leisure-equipment','/hire-section/motorhomes','/hire-section/roof-tents','/hire-product/vw-t5-campervan','/hire-product/paddleboard-hire','/hire-product/vw-lt28-motorhome','/hire-product/tentbox-roof-tent','/lincs-contact','/lincs-account','/lincs-request','/hire-terms','/privacy-policy','/other']);
  const blocked=()=>navigator.globalPrivacyControl===true||navigator.doNotTrack==='1';
  const uuid=()=>crypto.randomUUID().replaceAll('-','');
  let enabled=false,visitor=null,visit=null,engaged=0,lastTick=performance.now(),active=Date.now(),path=null,choice=null;
  const store=(k,v)=>{try{v===null?localStorage.removeItem(k):localStorage.setItem(k,JSON.stringify(v));}catch{}};
  const read=k=>{try{return JSON.parse(localStorage.getItem(k));}catch{return null;}};
  const normalPath=()=>routes.has(location.pathname.replace(/\/$/,'')||'/')?(location.pathname.replace(/\/$/,'')||'/'):'/other';
- function flush(){if(!enabled||!visit||blocked())return;const data={v:1,site,consent:true,visitor,visit,path,engaged_ms:Math.round(engaged)};
+ function flush(){if(choice&&Date.now()-choice.at>=30*86400000){enabled=false;visitor=null;store(key+':visitor',null);}if(!enabled||!visit||blocked())return;const data={v:1,site,consent:true,visitor,visit,path,engaged_ms:Math.round(engaged)};
   fetch(endpoint,{method:'POST',mode:'cors',credentials:'omit',keepalive:true,headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)}).catch(()=>{});
  }
  function page(){if(!enabled)return;flush();path=normalPath();visit=uuid();engaged=0;lastTick=performance.now();flush();}
@@ -34,5 +34,6 @@
  const changed=()=>{if(location.pathname!==rawPath){rawPath=location.pathname;page();}};
  for(const method of ['pushState','replaceState']){const old=history[method];history[method]=function(...args){const r=old.apply(this,args);changed();return r;};}addEventListener('popstate',changed);
  window.MiaAnalytics={consent,settings:banner};addEventListener('mia:analytics-consent',e=>consent(e.detail===true));
+ addEventListener('storage',e=>{if(e.key!==key+':choice')return;choice=read(key+':choice');if(!choice||Date.now()-choice.at>=30*86400000||blocked()){enabled=false;visit=null;visitor=null;store(key+':visitor',null);}else consent(choice.yes,false);});
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
